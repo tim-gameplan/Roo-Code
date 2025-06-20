@@ -1,0 +1,16 @@
+fastapi
+uvicorn[standard]
+pydantic-settings
+passlib[bcrypt]
+sqlalchemy
+psycopg2-binary
+asyncpg
+python-jose[cryptography]
+alembic
+
+# For development, consider adding:
+# flake8
+# black
+# isort
+# pytest
+# pytest-asyncio
