@@ -1,0 +1,19 @@
+{
+	"mcpServers": {
+		"eslint-code-quality": {
+			"command": "node",
+			"args": ["/Users/tim/gameplan/vibing/noo-code/Roo-Code/mcp-servers/eslint-server/dist/index.js"],
+			"env": {}
+		},
+		"prettier-formatter": {
+			"command": "node",
+			"args": ["/Users/tim/gameplan/vibing/noo-code/Roo-Code/mcp-servers/prettier-server/dist/index.js"],
+			"env": {}
+		},
+		"pnpm-package-manager": {
+			"command": "node",
+			"args": ["/Users/tim/gameplan/vibing/noo-code/Roo-Code/mcp-servers/pnpm-server/dist/index.js"],
+			"env": {}
+		}
+	}
+}

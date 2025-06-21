@@ -1,0 +1,25 @@
+{
+	"name": "@roo-code/pnpm-mcp-server",
+	"version": "1.0.0",
+	"description": "MCP server for PNPM package management and workspace operations",
+	"type": "module",
+	"main": "dist/index.js",
+	"bin": {
+		"pnpm-mcp-server": "dist/index.js"
+	},
+	"scripts": {
+		"build": "tsc",
+		"dev": "tsc --watch",
+		"start": "node dist/index.js"
+	},
+	"dependencies": {
+		"@modelcontextprotocol/sdk": "^1.0.0",
+		"semver": "^7.6.0",
+		"node-fetch": "^3.3.2"
+	},
+	"devDependencies": {
+		"typescript": "^5.4.5",
+		"@types/node": "^20.0.0",
+		"@types/semver": "^7.5.0"
+	}
+}
