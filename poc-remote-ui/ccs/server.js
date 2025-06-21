@@ -14,6 +14,23 @@ ipc.config.silent = false;
 
 // Middleware
 app.use(cors());
+
+// Custom JSON parsing middleware with error handling
+app.use('/send-message', (req, res, next) => {
+    express.json()(req, res, (err) => {
+        if (err) {
+            console.error('🚨 JSON parsing error:', err.message);
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid JSON format',
+                error: 'Request body must be valid JSON'
+            });
+        }
+        next();
+    });
+});
+
+// Standard JSON middleware for other routes
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
@@ -134,7 +151,12 @@ app.get('/health', (req, res) => {
     res.json({ 
         status: 'healthy',
         uptime: process.uptime(),
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        ipc: {
+            connected: ipcConnected,
+            queuedMessages: messageQueue.length,
+            socketPath: '/tmp/app.roo-extension'
+        }
     });
 });
 
