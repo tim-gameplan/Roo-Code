@@ -1,0 +1,134 @@
+{
+	"timestamp": "2025-06-22T00:15:48.713Z",
+	"phase": "Phase 1 - Basic Functionality Testing",
+	"tests": [
+		{
+			"testName": "Server Startup",
+			"passed": true,
+			"message": "CCS server started successfully on port 3000",
+			"details": {
+				"port": 3000,
+				"protocol": "http"
+			},
+			"timestamp": "2025-06-22T00:15:50.741Z"
+		},
+		{
+			"testName": "Health Check Endpoint",
+			"passed": true,
+			"message": "Health endpoint responds correctly",
+			"details": {
+				"statusCode": 200,
+				"responseTime": 2,
+				"healthData": {
+					"status": "healthy",
+					"uptime": 1.987140583,
+					"timestamp": "2025-06-22T00:15:50.742Z",
+					"ipc": {
+						"connected": false,
+						"queuedMessages": 0,
+						"socketPath": "/tmp/app.roo-extension"
+					}
+				}
+			},
+			"timestamp": "2025-06-22T00:15:50.743Z"
+		},
+		{
+			"testName": "Static Asset: Main HTML Page",
+			"passed": true,
+			"message": "Main HTML Page loads successfully",
+			"details": {
+				"path": "/",
+				"statusCode": 200,
+				"responseTime": 3,
+				"contentLength": 8012
+			},
+			"timestamp": "2025-06-22T00:15:50.746Z"
+		},
+		{
+			"testName": "Static Asset: CSS Stylesheet",
+			"passed": true,
+			"message": "CSS Stylesheet loads successfully",
+			"details": {
+				"path": "/style.css",
+				"statusCode": 200,
+				"responseTime": 2,
+				"contentLength": 7710
+			},
+			"timestamp": "2025-06-22T00:15:50.748Z"
+		},
+		{
+			"testName": "Send Message Endpoint",
+			"passed": true,
+			"message": "Send message endpoint accepts and processes requests",
+			"details": {
+				"statusCode": 200,
+				"responseTime": 5,
+				"testMessage": "Test message for Phase 1 validation",
+				"responseData": {
+					"success": false,
+					"message": "IPC not connected, message queued",
+					"queued": true
+				}
+			},
+			"timestamp": "2025-06-22T00:15:50.753Z"
+		},
+		{
+			"testName": "Error Handling: Invalid JSON",
+			"passed": true,
+			"message": "Correctly returned status 400 for Invalid JSON",
+			"details": {
+				"testName": "Invalid JSON",
+				"expectedStatus": 400,
+				"actualStatus": 400,
+				"testData": "invalid json"
+			},
+			"timestamp": "2025-06-22T00:15:50.755Z"
+		},
+		{
+			"testName": "Error Handling: Missing Message Field",
+			"passed": true,
+			"message": "Correctly returned status 400 for Missing Message Field",
+			"details": {
+				"testName": "Missing Message Field",
+				"expectedStatus": 400,
+				"actualStatus": 400,
+				"testData": "{\"notMessage\":\"test\"}"
+			},
+			"timestamp": "2025-06-22T00:15:50.756Z"
+		},
+		{
+			"testName": "Error Handling: Non-existent Endpoint",
+			"passed": true,
+			"message": "Correctly returned status 404 for Non-existent Endpoint",
+			"details": {
+				"testName": "Non-existent Endpoint",
+				"expectedStatus": 404,
+				"actualStatus": 404,
+				"testData": null
+			},
+			"timestamp": "2025-06-22T00:15:50.757Z"
+		},
+		{
+			"testName": "IPC Communication Setup",
+			"passed": true,
+			"message": "IPC client is configured and attempting connection",
+			"details": {
+				"ipcStatus": {
+					"connected": false,
+					"queuedMessages": 1,
+					"socketPath": "/tmp/app.roo-extension"
+				},
+				"socketPath": "default"
+			},
+			"timestamp": "2025-06-22T00:15:50.759Z"
+		}
+	],
+	"summary": {
+		"total": 9,
+		"passed": 9,
+		"failed": 0,
+		"warnings": 0,
+		"successRate": "100.00",
+		"completedAt": "2025-06-22T00:15:50.759Z"
+	}
+}

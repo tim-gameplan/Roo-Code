@@ -1744,81 +1744,95 @@ export class ClineProvider
 	 * Sets up IPC listener for remote UI communication
 	 */
 	public setupRemoteUIListener(): void {
+		console.log("🔧 [DEBUG] setupRemoteUIListener() called")
 		const socketPath = "/tmp/app.roo-extension"
-		
+		console.log("🔧 [DEBUG] Creating server on socket:", socketPath)
+
 		// Clean up any existing socket
 		try {
 			require("fs").unlinkSync(socketPath)
+			console.log("🔧 [DEBUG] Cleaned up existing socket")
 		} catch (error) {
-			// Socket doesn't exist, which is fine
+			console.log("🔧 [DEBUG] No existing socket to clean up")
 		}
 
-		const server = net.createServer((socket) => {
-			this.log("Remote UI client connected via IPC")
-			
-			socket.on("data", async (data) => {
-				try {
-					const message = JSON.parse(data.toString())
-					this.log(`Received remote UI message: ${JSON.stringify(message)}`)
-					
-					// Handle different message types
-					switch (message.type) {
-						case "sendMessage":
-							if (message.message) {
-								// Initialize a new task with the message from remote UI
-								await this.initClineWithTask(message.message)
-								socket.write(JSON.stringify({ success: true, message: "Task started" }))
-							} else {
-								socket.write(JSON.stringify({ success: false, error: "No message provided" }))
+		try {
+			const server = net.createServer((socket) => {
+				this.log("Remote UI client connected via IPC")
+				console.log("🔧 [DEBUG] Client connected to IPC socket")
+
+				socket.on("data", async (data) => {
+					try {
+						const message = JSON.parse(data.toString())
+						this.log(`Received remote UI message: ${JSON.stringify(message)}`)
+
+						// Handle different message types
+						switch (message.type) {
+							case "sendMessage": {
+								if (message.message) {
+									// Initialize a new task with the message from remote UI
+									await this.initClineWithTask(message.message)
+									socket.write(JSON.stringify({ success: true, message: "Task started" }))
+								} else {
+									socket.write(JSON.stringify({ success: false, error: "No message provided" }))
+								}
+								break
 							}
-							break
-						
-						case "getStatus":
-							const currentTask = this.getCurrentCline()
-							const status = {
-								hasActiveTask: !!currentTask,
-								taskId: currentTask?.taskId,
-								isStreaming: currentTask?.isStreaming || false
+
+							case "getStatus": {
+								const currentTask = this.getCurrentCline()
+								const status = {
+									hasActiveTask: !!currentTask,
+									taskId: currentTask?.taskId,
+									isStreaming: currentTask?.isStreaming || false,
+								}
+								socket.write(JSON.stringify({ success: true, status }))
+								break
 							}
-							socket.write(JSON.stringify({ success: true, status }))
-							break
-						
-						default:
-							socket.write(JSON.stringify({ success: false, error: "Unknown message type" }))
+
+							default:
+								socket.write(JSON.stringify({ success: false, error: "Unknown message type" }))
+						}
+					} catch (error) {
+						this.log(`Error processing remote UI message: ${error}`)
+						socket.write(JSON.stringify({ success: false, error: "Invalid JSON message" }))
 					}
-				} catch (error) {
-					this.log(`Error processing remote UI message: ${error}`)
-					socket.write(JSON.stringify({ success: false, error: "Invalid JSON message" }))
-				}
+				})
+
+				socket.on("error", (error) => {
+					this.log(`Remote UI socket error: ${error}`)
+				})
+
+				socket.on("close", () => {
+					this.log("Remote UI client disconnected")
+				})
 			})
-			
-			socket.on("error", (error) => {
-				this.log(`Remote UI socket error: ${error}`)
+
+			server.on("error", (error) => {
+				console.log("🔧 [DEBUG] IPC server error:", error)
+				this.log(`❌ IPC server error: ${error}`)
 			})
-			
-			socket.on("close", () => {
-				this.log("Remote UI client disconnected")
+
+			server.listen(socketPath, () => {
+				console.log("🔧 [DEBUG] IPC server listening on:", socketPath)
+				this.log(`✅ Remote UI IPC server listening on ${socketPath}`)
 			})
-		})
-		
-		server.listen(socketPath, () => {
-			this.log(`Remote UI IPC server listening on ${socketPath}`)
-		})
-		
-		server.on("error", (error) => {
-			this.log(`Remote UI IPC server error: ${error}`)
-		})
-		
-		// Store server reference for cleanup
-		this.disposables.push({
-			dispose: () => {
-				server.close()
-				try {
-					require("fs").unlinkSync(socketPath)
-				} catch (error) {
-					// Ignore cleanup errors
-				}
-			}
-		})
+
+			// Store server reference for cleanup
+			this.disposables.push({
+				dispose: () => {
+					console.log("🔧 [DEBUG] Disposing IPC server")
+					server.close()
+					try {
+						require("fs").unlinkSync(socketPath)
+					} catch (error) {
+						// Ignore cleanup errors
+					}
+				},
+			})
+		} catch (error) {
+			console.log("🔧 [DEBUG] Failed to setup IPC:", error)
+			this.log(`❌ Failed to setup IPC: ${error}`)
+		}
 	}
 }
