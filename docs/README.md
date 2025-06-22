@@ -19,6 +19,15 @@ This directory contains comprehensive documentation for Feature 2: Remote UI Acc
 | [GitHub Setup Guide](./github-setup-guide.md) | Step-by-step implementation guide | Project leads, team setup |
 | [GitHub Setup Instructions](./github-setup-instructions.md) | Repository-specific setup commands | Repository administrators |
 | [Developer Workflow Guide](./developer-workflow-guide.md) | Daily workflow and GitHub issue tracking | Developers, engineers |
+| [Development Setup Guide](./development-setup-guide.md) | Local development environment setup | Developers, contributors |
+
+### Task Documentation
+
+| Document | Purpose | Audience |
+|----------|---------|----------|
+| [TASK-001: Simplified Remote UI PoC](./tasks/task-001-simplified-remote-ui-poc.md) | Initial PoC implementation | Development team |
+| [TASK-002: PoC Testing & Validation](./tasks/task-002-poc-testing-validation.md) | Testing framework and extension integration | Development team, QA |
+| [TASK-002 Summary](./tasks/TASK_002_SUMMARY.md) | Complete TASK-002 implementation summary | All stakeholders |
 
 ---
 
@@ -231,6 +240,10 @@ This documentation is maintained alongside the codebase. For updates or correcti
 | GitHub Setup Guide | 1.0 | Dec 2024 | Ready for Implementation |
 | GitHub Setup Instructions | 1.0 | Dec 2024 | Ready for Implementation |
 | Developer Workflow Guide | 1.0 | Dec 2024 | Ready for Implementation |
+| Development Setup Guide | 1.0 | Jun 2025 | Complete |
+| TASK-001: Simplified Remote UI PoC | 1.0 | Jun 2025 | Complete |
+| TASK-002: PoC Testing & Validation | 1.0 | Jun 2025 | Complete |
+| TASK-002 Summary | 1.0 | Jun 2025 | Complete |
 
 ---
 

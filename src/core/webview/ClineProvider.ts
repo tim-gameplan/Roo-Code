@@ -1,6 +1,7 @@
 import os from "os"
 import * as path from "path"
 import fs from "fs/promises"
+import * as net from "net"
 import EventEmitter from "events"
 
 import { Anthropic } from "@anthropic-ai/sdk"
@@ -1736,5 +1737,88 @@ export class ClineProvider
 			diffStrategy: task?.diffStrategy?.getName(),
 			isSubtask: task ? !!task.parentTask : undefined,
 		}
+	}
+
+	/**
+	 * TASK-002: Remote UI IPC Handler
+	 * Sets up IPC listener for remote UI communication
+	 */
+	public setupRemoteUIListener(): void {
+		const socketPath = "/tmp/app.roo-extension"
+		
+		// Clean up any existing socket
+		try {
+			require("fs").unlinkSync(socketPath)
+		} catch (error) {
+			// Socket doesn't exist, which is fine
+		}
+
+		const server = net.createServer((socket) => {
+			this.log("Remote UI client connected via IPC")
+			
+			socket.on("data", async (data) => {
+				try {
+					const message = JSON.parse(data.toString())
+					this.log(`Received remote UI message: ${JSON.stringify(message)}`)
+					
+					// Handle different message types
+					switch (message.type) {
+						case "sendMessage":
+							if (message.message) {
+								// Initialize a new task with the message from remote UI
+								await this.initClineWithTask(message.message)
+								socket.write(JSON.stringify({ success: true, message: "Task started" }))
+							} else {
+								socket.write(JSON.stringify({ success: false, error: "No message provided" }))
+							}
+							break
+						
+						case "getStatus":
+							const currentTask = this.getCurrentCline()
+							const status = {
+								hasActiveTask: !!currentTask,
+								taskId: currentTask?.taskId,
+								isStreaming: currentTask?.isStreaming || false
+							}
+							socket.write(JSON.stringify({ success: true, status }))
+							break
+						
+						default:
+							socket.write(JSON.stringify({ success: false, error: "Unknown message type" }))
+					}
+				} catch (error) {
+					this.log(`Error processing remote UI message: ${error}`)
+					socket.write(JSON.stringify({ success: false, error: "Invalid JSON message" }))
+				}
+			})
+			
+			socket.on("error", (error) => {
+				this.log(`Remote UI socket error: ${error}`)
+			})
+			
+			socket.on("close", () => {
+				this.log("Remote UI client disconnected")
+			})
+		})
+		
+		server.listen(socketPath, () => {
+			this.log(`Remote UI IPC server listening on ${socketPath}`)
+		})
+		
+		server.on("error", (error) => {
+			this.log(`Remote UI IPC server error: ${error}`)
+		})
+		
+		// Store server reference for cleanup
+		this.disposables.push({
+			dispose: () => {
+				server.close()
+				try {
+					require("fs").unlinkSync(socketPath)
+				} catch (error) {
+					// Ignore cleanup errors
+				}
+			}
+		})
 	}
 }
