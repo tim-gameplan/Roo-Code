@@ -1,0 +1,26 @@
+{
+	"ignorePatterns": [
+		{
+			"pattern": "^http://localhost"
+		},
+		{
+			"pattern": "^https://localhost"
+		}
+	],
+	"replacementPatterns": [
+		{
+			"pattern": "^/",
+			"replacement": "https://github.com/tim-gameplan/Roo-Code/blob/main/"
+		}
+	],
+	"httpStatusCodes": {
+		"400": "warn",
+		"401": "warn",
+		"403": "warn",
+		"404": "error",
+		"405": "warn",
+		"500": "warn",
+		"502": "warn",
+		"503": "warn"
+	}
+}

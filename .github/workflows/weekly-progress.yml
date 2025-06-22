@@ -1,0 +1,63 @@
+name: Weekly Progress Report
+
+on:
+  schedule:
+    - cron: '0 9 * * MON'  # Every Monday at 9 AM UTC
+  workflow_dispatch:  # Allow manual triggering
+
+jobs:
+  generate-progress-report:
+    runs-on: ubuntu-latest
+    name: Generate Weekly Progress Report
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Generate milestone progress
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            
+            // Get all milestones
+            const milestones = await github.rest.issues.listMilestones({
+              owner,
+              repo,
+              state: 'open'
+            });
+            
+            let report = '# 📊 Weekly Progress Report\n\n';
+            report += `**Generated**: ${new Date().toISOString().split('T')[0]}\n\n`;
+            
+            for (const milestone of milestones.data) {
+              const progress = milestone.closed_issues / (milestone.open_issues + milestone.closed_issues) * 100;
+              report += `## ${milestone.title}\n`;
+              report += `- **Progress**: ${progress.toFixed(1)}% (${milestone.closed_issues}/${milestone.open_issues + milestone.closed_issues} issues)\n`;
+              report += `- **Due Date**: ${milestone.due_on ? new Date(milestone.due_on).toDateString() : 'No due date'}\n`;
+              report += `- **Description**: ${milestone.description || 'No description'}\n\n`;
+            }
+            
+            // Get recent activity
+            const issues = await github.rest.issues.listForRepo({
+              owner,
+              repo,
+              state: 'all',
+              since: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+              per_page: 100
+            });
+            
+            const recentIssues = issues.data.filter(issue => 
+              new Date(issue.updated_at) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+            );
+            
+            report += '## 📈 Recent Activity\n\n';
+            report += `- **Issues updated this week**: ${recentIssues.length}\n`;
+            report += `- **Issues closed this week**: ${recentIssues.filter(i => i.state === 'closed').length}\n`;
+            report += `- **New issues this week**: ${recentIssues.filter(i => new Date(i.created_at) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)).length}\n\n`;
+            
+            console.log('Generated weekly progress report');
+            
+            // Create or update a discussion with the report
+            // Note: This would require the Discussions API when available
+            console.log(report);

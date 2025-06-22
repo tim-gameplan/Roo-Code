@@ -1,7 +1,9 @@
 # GitHub Setup Instructions for Roo-Code Repository
+
 ## Feature 2: Remote UI Access Project Management
 
 ### Document Information
+
 - **Repository**: tim-gameplan/Roo-Code
 - **Date**: December 2024
 - **Status**: Ready for Implementation
@@ -17,6 +19,7 @@
 ## 1. Enable GitHub Issues
 
 ### Step 1: Repository Settings
+
 1. Go to https://github.com/tim-gameplan/Roo-Code
 2. Click **Settings** tab (requires admin access)
 3. Scroll down to **Features** section
@@ -24,6 +27,7 @@
 5. Optionally enable **Projects** if you want to use GitHub Projects
 
 ### Step 2: Verify Issues are Enabled
+
 - Go to the **Issues** tab in the repository
 - You should see "Welcome to issues!" message
 - Issues are now ready for setup
@@ -138,7 +142,7 @@ This milestone covers the development of the Central Communication Server (CCS) 
 
 ## Related Documentation
 - [Implementation Plan](./docs/feature-2-implementation-plan.md) - Phase 1 tasks
-- [System Architecture](./docs/system-architecture.md) - CCS components
+- [System Architecture](./https://github.com/tim-gameplan/Roo-Code/blob/main/docs/architecture/system-architecture.md) - CCS components
 - [API Specifications](./docs/feature-2-api-specifications.md) - CCS APIs
 
 ## Epic Issues
@@ -352,12 +356,14 @@ Implement JWT-based authentication system for the CCS.
 ## 4. GitHub Project Board Setup
 
 ### Create Project Board
+
 1. Go to **Projects** tab in repository
 2. Click **New project**
 3. Choose **Board** layout
 4. Name: "Feature 2: Remote UI Access"
 
 ### Configure Columns
+
 - 📋 **Backlog** - All planned work
 - 🔍 **Ready** - Issues ready to start
 - 🚧 **In Progress** - Currently being worked on
@@ -366,6 +372,7 @@ Implement JWT-based authentication system for the CCS.
 - ✅ **Done** - Completed work
 
 ### Add Issues to Project
+
 1. Go to project board
 2. Click **Add items**
 3. Search for and add all created issues
@@ -376,27 +383,28 @@ Implement JWT-based authentication system for the CCS.
 ## 5. Automation Setup
 
 ### GitHub Actions Workflow
+
 Create `.github/workflows/project-automation.yml`:
 
 ```yaml
 name: Project Automation
 
 on:
-  issues:
-    types: [opened, closed, labeled, unlabeled]
-  pull_request:
-    types: [opened, closed, ready_for_review, converted_to_draft]
+    issues:
+        types: [opened, closed, labeled, unlabeled]
+    pull_request:
+        types: [opened, closed, ready_for_review, converted_to_draft]
 
 jobs:
-  update_project:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Add new issues to project
-        if: github.event.action == 'opened' && github.event.issue
-        uses: actions/add-to-project@v0.4.0
-        with:
-          project-url: https://github.com/tim-gameplan/Roo-Code/projects/1
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+    update_project:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Add new issues to project
+              if: github.event.action == 'opened' && github.event.issue
+              uses: actions/add-to-project@v0.4.0
+              with:
+                  project-url: https://github.com/tim-gameplan/Roo-Code/projects/1
+                  github-token: ${{ secrets.GITHUB_TOKEN }}
 ```
 
 ---
@@ -404,12 +412,14 @@ jobs:
 ## 6. Verification Checklist
 
 ### Repository Setup ✅
+
 - [ ] Issues enabled in repository settings
 - [ ] Issue templates uploaded and working
 - [ ] Pull request template uploaded
 - [ ] Documentation organized in docs/ folder
 
 ### Project Management ✅
+
 - [ ] All labels created and organized
 - [ ] Milestones created with correct dates
 - [ ] Milestone tracking issues created
@@ -417,12 +427,14 @@ jobs:
 - [ ] Initial story issues created
 
 ### Project Board ✅
+
 - [ ] GitHub Project board created
 - [ ] Columns configured correctly
 - [ ] Issues added to project board
 - [ ] Project views configured
 
 ### Team Setup ✅
+
 - [ ] Team members have appropriate repository access
 - [ ] Project management documentation shared
 - [ ] Initial issues assigned to team members

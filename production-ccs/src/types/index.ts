@@ -282,5 +282,161 @@ export class RateLimitError extends AppError {
   }
 }
 
+// Real-Time Communication Types
+export enum EventType {
+  // Typing events
+  TYPING_STARTED = 'typing.started',
+  TYPING_STOPPED = 'typing.stopped',
+  TYPING_CURSOR_MOVED = 'typing.cursor_moved',
+
+  // Session events
+  SESSION_CREATED = 'session.created',
+  SESSION_UPDATED = 'session.updated',
+  SESSION_OPERATION_APPLIED = 'session.operation_applied',
+  SESSION_CONFLICT_DETECTED = 'session.conflict_detected',
+  SESSION_CONFLICT_RESOLVED = 'session.conflict_resolved',
+
+  // Presence events
+  PRESENCE_ONLINE = 'presence.online',
+  PRESENCE_OFFLINE = 'presence.offline',
+  PRESENCE_AWAY = 'presence.away',
+  PRESENCE_DEVICE_CONNECTED = 'presence.device_connected',
+  PRESENCE_DEVICE_DISCONNECTED = 'presence.device_disconnected',
+
+  // Messaging events
+  MESSAGE_SENT = 'message.sent',
+  MESSAGE_DELIVERED = 'message.delivered',
+  MESSAGE_READ = 'message.read',
+  MESSAGE_TYPING_INDICATOR = 'message.typing_indicator',
+
+  // System events
+  SYSTEM_HEALTH_CHECK = 'system.health_check',
+  SYSTEM_PERFORMANCE_ALERT = 'system.performance_alert',
+  SYSTEM_ERROR = 'system.error',
+
+  // Custom events
+  CUSTOM_EVENT = 'custom.event',
+}
+
+export enum EventPriority {
+  CRITICAL = 'critical',
+  HIGH = 'high',
+  NORMAL = 'normal',
+  LOW = 'low',
+  BACKGROUND = 'background',
+}
+
+export interface EventSource {
+  userId: string;
+  deviceId: string;
+}
+
+export interface EventPayload {
+  [key: string]: any;
+}
+
+export interface EventMetadata {
+  [key: string]: any;
+}
+
+export interface EventPermissions {
+  canRead: boolean;
+  readScopes: string[];
+  canPublish: boolean;
+  publishScopes: string[];
+  canManageSubscriptions: boolean;
+  canViewMetrics: boolean;
+  canReplayEvents: boolean;
+}
+
+export interface RealTimeEvent {
+  id: string;
+  type: EventType;
+  timestamp: number;
+  version: string;
+  source: EventSource;
+  correlationId?: string;
+  causationId?: string;
+  payload: EventPayload;
+  metadata: EventMetadata;
+  priority: EventPriority;
+  ttl?: number;
+  requiresAck: boolean;
+  retryPolicy?: any;
+  targets?: any[];
+  filters?: any[];
+  permissions: EventPermissions;
+  encryption?: any;
+}
+
+export interface EventSubscription {
+  id: string;
+  userId: string;
+  deviceId: string;
+  sessionId?: string;
+  eventTypes: EventType[];
+  filters: any[];
+  priority: EventPriority;
+  deliveryMode: 'realtime' | 'batched' | 'offline';
+  batchSize?: number;
+  batchInterval?: number;
+  createdAt: number;
+  expiresAt?: number;
+  isActive: boolean;
+  eventsReceived: number;
+  lastEventAt?: number;
+  averageLatency: number;
+}
+
+export interface EventPublishResult {
+  eventId: string;
+  status: 'published' | 'failed';
+  deliveredTo: string[];
+  latency: number;
+}
+
+export interface SubscriptionResult {
+  subscriptionId: string;
+  status: 'active' | 'inactive';
+  createdAt: number;
+}
+
+export interface EventMetrics {
+  eventsProcessed: number;
+  eventsPerSecond: number;
+  averageLatency: number;
+  errorRate: number;
+  activeSubscriptions: number;
+  subscriptionRate: number;
+  unsubscriptionRate: number;
+  eventsStored: number;
+  storageSize: number;
+  replayRequests: number;
+  cpuUsage: number;
+  memoryUsage: number;
+  networkThroughput: number;
+  deliverySuccess: number;
+  duplicateEvents: number;
+  lostEvents: number;
+}
+
+export interface SystemHealthStatus {
+  status: 'healthy' | 'degraded' | 'unhealthy';
+  uptime: number;
+  lastHealthCheck: number;
+  eventRouter: any;
+  subscriptionManager: any;
+  eventStorage: any;
+  replaySystem: any;
+  latencyP95: number;
+  latencyP99: number;
+  errorRate: number;
+  throughput: number;
+  cpuHealth: any;
+  memoryHealth: any;
+  storageHealth: any;
+  networkHealth: any;
+}
+
 // Export mobile types and interfaces
 export * from './mobile';

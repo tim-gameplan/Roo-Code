@@ -14,7 +14,9 @@ This index provides complete access to all documentation for the Remote UI proje
 - **TASK-002:** POC Testing & Validation
 - **TASK-003:** POC Validation - Extension Activation
 - **TASK-004:** Production Implementation - Communication & Control Server
-- **TASK-005.1.1:** Mobile-Optimized Message Format (NEW)
+- **TASK-005.1.1:** Mobile-Optimized Message Format
+- **TASK-005.1.2:** Enhanced WebSocket Protocol & Real-Time Messaging
+- **TASK-005.1.3:** Real-Time Communication Services (NEW)
 
 ---
 

@@ -1,0 +1,75 @@
+# Priority Labels
+- name: "priority/critical"
+  color: "d73a4a"
+  description: "🔴 Blocking issues that must be resolved immediately"
+
+- name: "priority/high"
+  color: "ff9500"
+  description: "🟠 Important features and fixes"
+
+- name: "priority/medium"
+  color: "ffcc00"
+  description: "🟡 Standard development work"
+
+- name: "priority/low"
+  color: "28a745"
+  description: "🟢 Nice to have improvements"
+
+# Component Labels
+- name: "component/mobile"
+  color: "0052cc"
+  description: "📱 Mobile application development"
+
+- name: "component/database"
+  color: "5319e7"
+  description: "🗄️ Database schema, queries, and migrations"
+
+- name: "component/auth"
+  color: "d4c5f9"
+  description: "🔐 Authentication and authorization"
+
+- name: "component/api"
+  color: "0e8a16"
+  description: "🌐 API development and integration"
+
+- name: "component/docs"
+  color: "1d76db"
+  description: "📚 Documentation updates and improvements"
+
+- name: "component/testing"
+  color: "f9d0c4"
+  description: "🧪 Testing, QA, and validation"
+
+# Status Labels
+- name: "status/in-progress"
+  color: "fbca04"
+  description: "🚧 Currently being worked on"
+
+- name: "status/blocked"
+  color: "d73a4a"
+  description: "⏸️ Waiting on external dependency"
+
+- name: "status/review"
+  color: "0052cc"
+  description: "👀 Needs code review or feedback"
+
+- name: "status/testing"
+  color: "0e8a16"
+  description: "🧪 In testing or QA phase"
+
+# Epic Labels
+- name: "epic/task-005"
+  color: "b60205"
+  description: "📋 TASK-005: Mobile-First Communication"
+
+- name: "epic/task-006"
+  color: "d93f0b"
+  description: "🔐 TASK-006: Cross-Device Authentication"
+
+- name: "epic/task-007"
+  color: "fbca04"
+  description: "🗄️ TASK-007: Database Integration & Sync"
+
+- name: "epic/task-008"
+  color: "0e8a16"
+  description: "📱 TASK-008: Mobile Applications"

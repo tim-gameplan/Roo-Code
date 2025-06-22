@@ -248,7 +248,7 @@ Internet → Load Balancer → CCS (Express.js) → IPC → Roo Extension → We
 - **POC Results**: [TASK_003_COMPLETION_REPORT.md](../poc-remote-ui/results/TASK_003_COMPLETION_REPORT.md)
 - **Implementation Plan**: [feature-2-implementation-plan.md](../docs/feature-2-implementation-plan.md)
 - **API Specifications**: [feature-2-api-specifications.md](../docs/feature-2-api-specifications.md)
-- **System Architecture**: [system-architecture.md](../docs/system-architecture.md)
+- **System Architecture**: [system-architecture.md](../https://github.com/tim-gameplan/Roo-Code/blob/main/docs/architecture/system-architecture.md)
 
 ### 🏷️ Labels
 
