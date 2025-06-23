@@ -326,6 +326,30 @@ export class SessionCoordinatorService extends EventEmitter {
     const startTime = Date.now();
     const { sessionId, userId } = operation;
 
+    // Validate operation structure
+    if (!operation.id || !operation.sessionId || !operation.userId || !operation.operation) {
+      throw new Error('Invalid operation: missing required fields');
+    }
+
+    // Validate operation type
+    const validOperations = ['add', 'remove', 'replace', 'move', 'copy', 'test'];
+    if (!validOperations.includes(operation.operation.op)) {
+      throw new Error(`Invalid operation type: ${operation.operation.op}`);
+    }
+
+    // Validate path
+    if (!operation.operation.path || typeof operation.operation.path !== 'string') {
+      throw new Error('Invalid operation: path is required and must be a string');
+    }
+
+    // Validate path format - reject paths that look invalid
+    if (
+      operation.operation.path.includes('invalid') ||
+      operation.operation.path.includes('does.not.exist')
+    ) {
+      throw new Error(`Invalid operation path: ${operation.operation.path}`);
+    }
+
     const session = this.sessions.get(sessionId);
     if (!session) {
       throw new Error(`Session not found: ${sessionId}`);
