@@ -2,16 +2,16 @@ import { Router, Request, Response } from 'express';
 import { AuthMiddleware, AuthenticatedRequest } from '../middleware/auth';
 import { ValidationMiddleware, authSchemas, commonSchemas } from '../middleware/validation';
 import { RateLimitMiddleware, APIRateLimiter } from '../middleware/rate-limit';
-import { AuthService } from '../services/auth';
+// import { AuthService } from '../services/auth';
 import { DatabaseService } from '../services/database';
 import { logger } from '../utils/logger';
-import { Pool } from 'pg';
+// import { Pool } from 'pg';
 
 const router = Router();
 
 // Initialize services
 const dbService = new DatabaseService();
-let authService: AuthService;
+// let authService: AuthService;
 
 // Initialize auth service with database pool
 const initializeAuthService = async () => {
@@ -19,7 +19,7 @@ const initializeAuthService = async () => {
     await dbService.connect();
     // For now, we'll create a simple pool connection
     // This will be enhanced when we integrate with the full auth service
-    authService = new AuthService(dbService as any);
+    // authService = new AuthService(dbService as any);
   } catch (error) {
     logger.error('Failed to initialize auth service:', error);
   }

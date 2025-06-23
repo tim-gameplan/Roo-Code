@@ -73,7 +73,7 @@ export class HealthController {
    * Basic health check endpoint
    * Returns simple status for load balancers and monitoring
    */
-  basicHealthCheck = async (req: Request, res: Response): Promise<void> => {
+  basicHealthCheck = async (_req: Request, res: Response): Promise<void> => {
     try {
       const uptime = Math.floor((Date.now() - this.startTime) / 1000);
 
@@ -115,7 +115,7 @@ export class HealthController {
    * Detailed health check endpoint
    * Returns comprehensive system status
    */
-  detailedHealthCheck = async (req: Request, res: Response): Promise<void> => {
+  detailedHealthCheck = async (_req: Request, res: Response): Promise<void> => {
     try {
       const uptime = Math.floor((Date.now() - this.startTime) / 1000);
       const memoryUsage = process.memoryUsage();
@@ -209,7 +209,7 @@ export class HealthController {
    * Metrics endpoint for monitoring systems
    * Returns detailed performance metrics
    */
-  metricsCheck = async (req: Request, res: Response): Promise<void> => {
+  metricsCheck = async (_req: Request, res: Response): Promise<void> => {
     try {
       const uptime = Math.floor((Date.now() - this.startTime) / 1000);
       const memoryUsage = process.memoryUsage();

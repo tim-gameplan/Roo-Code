@@ -6,12 +6,12 @@ import {
   Session,
   ExtensionConnection,
   Message,
-  MessageType,
+  // MessageType,
   MessageStatus,
   RealTimeEvent,
   EventSubscription,
   EventType,
-  EventPriority,
+  // EventPriority,
 } from '@/types';
 
 export class DatabaseService {

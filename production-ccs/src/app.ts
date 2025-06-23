@@ -4,23 +4,22 @@ import helmet from 'helmet';
 import compression from 'compression';
 import { config, validateConfig } from './config';
 import { logger } from './utils/logger';
-import { AuthMiddleware } from './middleware/auth';
-import { ValidationMiddleware } from './middleware/validation';
+// import { AuthMiddleware } from './middleware/auth';
 import { RateLimitMiddleware } from './middleware/rate-limit';
-import { ErrorMiddleware } from './middleware/error';
+// import { ErrorMiddleware } from './middleware/error';
 import { databaseService } from './services/database';
 
 // Import routes
 import authRoutes from './routes/auth';
-import { healthRoutes, healthController } from './routes/health';
+import { healthRoutes } from './routes/health';
+import { initializeUsersRoutes } from './routes/users';
 
 export class ExpressApp {
   public app: Application;
-  private authMiddleware: AuthMiddleware;
+  // private authMiddleware: AuthMiddleware;
 
   constructor() {
     this.app = express();
-    this.authMiddleware = new AuthMiddleware();
 
     this.initializeMiddleware();
     this.initializeRoutes();
@@ -93,7 +92,7 @@ export class ExpressApp {
     this.app.use(
       express.json({
         limit: '10mb',
-        verify: (req: any, res: Response, buf: Buffer) => {
+        verify: (req: any, _res: Response, buf: Buffer) => {
           req.rawBody = buf;
         },
       })
@@ -164,9 +163,9 @@ export class ExpressApp {
     // Authentication routes (with specific rate limiting)
     this.app.use(`${apiV1}/auth`, authRoutes);
 
-    // Protected API routes will be added in subsequent tasks
+    // Protected API routes
     // User management routes (TASK-007.2.1.3)
-    // this.app.use(`${apiV1}/users`, userRoutes);
+    this.app.use(`${apiV1}/users`, initializeUsersRoutes(databaseService));
 
     // Conversation management routes (TASK-007.2.1.4)
     // this.app.use(`${apiV1}/conversations`, conversationRoutes);
@@ -175,7 +174,7 @@ export class ExpressApp {
     // this.app.use(`${apiV1}/files`, fileRoutes);
 
     // WebSocket upgrade handling (for real-time features)
-    this.app.get('/ws', (req: Request, res: Response) => {
+    this.app.get('/ws', (_req: Request, res: Response) => {
       res.status(426).json({
         success: false,
         error: 'WebSocket upgrade required',
@@ -185,7 +184,7 @@ export class ExpressApp {
     });
 
     // API documentation route
-    this.app.get('/api', (req: Request, res: Response) => {
+    this.app.get('/api', (_req: Request, res: Response) => {
       res.json({
         name: 'Roo Remote UI Central Communication Server',
         version: '1.0.0',
@@ -244,7 +243,27 @@ export class ExpressApp {
    */
   private initializeErrorHandling(): void {
     // Global error handler (must be last middleware)
-    this.app.use(ErrorMiddleware.globalErrorHandler);
+    this.app.use((error: any, req: Request, res: Response, _next: NextFunction) => {
+      const requestId = (req as any).requestId || 'unknown';
+      const timestamp = new Date().toISOString();
+
+      logger.error('Unhandled error', {
+        error: error.message,
+        stack: error.stack,
+        requestId,
+        method: req.method,
+        url: req.url,
+      });
+
+      res.status(500).json({
+        success: false,
+        error: 'Internal server error',
+        code: 'INTERNAL_ERROR',
+        message: 'An unexpected error occurred',
+        timestamp,
+        requestId,
+      });
+    });
   }
 
   /**

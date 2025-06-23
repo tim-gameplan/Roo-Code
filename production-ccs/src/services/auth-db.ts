@@ -2,7 +2,7 @@ import { Pool } from 'pg';
 import bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
 import { logger } from '../utils/logger';
-import { User, CreateUserRequest, Session, Device, LoginRequest } from '../types/auth';
+import { User, CreateUserRequest, Session, Device } from '../types/auth';
 
 // Custom error class for authentication errors
 export class AuthError extends Error {

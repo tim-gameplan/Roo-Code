@@ -18,11 +18,7 @@ export class AuthMiddleware {
    * JWT Authentication middleware
    * Validates JWT token and attaches user to request
    */
-  authenticate = async (
-    req: AuthenticatedRequest,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> => {
+  authenticate = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const authHeader = req.headers.authorization;
 
@@ -61,7 +57,7 @@ export class AuthMiddleware {
       }
 
       // Attach user to request
-      req.user = {
+      (req as AuthenticatedRequest).user = {
         id: decoded.user_id,
         email: decoded.email,
         display_name: decoded.display_name,
@@ -103,7 +99,7 @@ export class AuthMiddleware {
    */
   optionalAuth = async (
     req: AuthenticatedRequest,
-    res: Response,
+    _res: Response,
     next: NextFunction
   ): Promise<void> => {
     try {
