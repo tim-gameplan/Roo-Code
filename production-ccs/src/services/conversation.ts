@@ -12,17 +12,11 @@
 import { Pool, PoolClient } from 'pg';
 import {
   Conversation,
-  ConversationMetadata,
   ConversationSummary,
-  ConversationStats,
   Message,
-  MessageContent,
-  MessageMetadata,
   MessageWithThread,
   MessageChange,
   ChangeData,
-  MessageAttachment,
-  ConversationParticipant,
   CreateConversationRequest,
   CreateConversationResponse,
   UpdateConversationRequest,
@@ -37,18 +31,7 @@ import {
   GetMessagesResponse,
   DeleteMessageRequest,
   DeleteMessageResponse,
-  SyncRequest,
-  SyncResponse,
-  ConflictData,
-  ResolveConflictRequest,
-  ResolveConflictResponse,
-  SearchRequest,
-  SearchResponse,
-  SearchResult,
-  ConversationAnalytics,
-  MessageType,
   ChangeType,
-  SyncStatus,
 } from '../types/conversation';
 import { logger } from '../utils/logger';
 
@@ -324,19 +307,26 @@ export class ConversationService {
       const countResult = await client.query(countQuery, queryParams.slice(0, -2));
       const totalCount = parseInt(countResult.rows[0].total);
 
-      const conversations: ConversationSummary[] = result.rows.map((row) => ({
-        id: row.id,
-        user_id: row.user_id,
-        title: row.title,
-        workspace_path: row.workspace_path,
-        metadata: row.metadata,
-        created_at: new Date(row.created_at),
-        updated_at: new Date(row.updated_at),
-        last_activity: new Date(row.last_activity),
-        message_count: parseInt(row.message_count),
-        last_message_at: row.last_message_at ? new Date(row.last_message_at) : undefined,
-        device_count: parseInt(row.device_count),
-      }));
+      const conversations: ConversationSummary[] = result.rows.map((row) => {
+        const summary: ConversationSummary = {
+          id: row.id,
+          user_id: row.user_id,
+          title: row.title,
+          workspace_path: row.workspace_path,
+          metadata: row.metadata,
+          created_at: new Date(row.created_at),
+          updated_at: new Date(row.updated_at),
+          last_activity: new Date(row.last_activity),
+          message_count: parseInt(row.message_count),
+          device_count: parseInt(row.device_count),
+        };
+
+        if (row.last_message_at) {
+          summary.last_message_at = new Date(row.last_message_at);
+        }
+
+        return summary;
+      });
 
       return {
         conversations,
@@ -939,9 +929,15 @@ class ConversationError extends Error {
     super(message);
     this.name = 'ConversationError';
     this.code = options.code;
-    this.conversation_id = options.conversation_id;
-    this.user_id = options.user_id;
-    this.details = options.details;
+    if (options.conversation_id !== undefined) {
+      this.conversation_id = options.conversation_id;
+    }
+    if (options.user_id !== undefined) {
+      this.user_id = options.user_id;
+    }
+    if (options.details !== undefined) {
+      this.details = options.details;
+    }
   }
 }
 
@@ -967,39 +963,17 @@ class MessageError extends Error {
     super(message);
     this.name = 'MessageError';
     this.code = options.code;
-    this.message_id = options.message_id;
-    this.conversation_id = options.conversation_id;
-    this.details = options.details;
-  }
-}
-
-class SyncError extends Error {
-  public code: string;
-  public device_id?: string;
-  public user_id?: string;
-  public conflict_id?: string;
-  public details?: Record<string, any>;
-
-  constructor(
-    message: string,
-    options: {
-      code:
-        | 'SYNC_FAILED'
-        | 'CONFLICT_RESOLUTION_FAILED'
-        | 'DEVICE_NOT_AUTHORIZED'
-        | 'TIMESTAMP_MISMATCH';
-      device_id?: string;
-      user_id?: string;
-      conflict_id?: string;
-      details?: Record<string, any>;
+    if (options.message_id !== undefined) {
+      this.message_id = options.message_id;
     }
-  ) {
-    super(message);
-    this.name = 'SyncError';
-    this.code = options.code;
-    this.device_id = options.device_id;
-    this.user_id = options.user_id;
-    this.conflict_id = options.conflict_id;
-    this.details = options.details;
+    if (options.conversation_id !== undefined) {
+      this.conversation_id = options.conversation_id;
+    }
+    if (options.details !== undefined) {
+      this.details = options.details;
+    }
   }
 }
+
+// Export error classes for use in API endpoints
+export { ConversationError, MessageError };

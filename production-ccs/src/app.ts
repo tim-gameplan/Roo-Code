@@ -13,6 +13,8 @@ import { databaseService } from './services/database';
 import authRoutes from './routes/auth';
 import { healthRoutes } from './routes/health';
 import { initializeUsersRoutes } from './routes/users';
+import conversationRoutes from './routes/conversations';
+import messageRoutes from './routes/messages';
 
 export class ExpressApp {
   public app: Application;
@@ -168,7 +170,10 @@ export class ExpressApp {
     this.app.use(`${apiV1}/users`, initializeUsersRoutes(databaseService));
 
     // Conversation management routes (TASK-007.2.1.4)
-    // this.app.use(`${apiV1}/conversations`, conversationRoutes);
+    this.app.use(`${apiV1}/conversations`, conversationRoutes);
+
+    // Message management routes (TASK-007.2.1.4)
+    this.app.use(`${apiV1}`, messageRoutes);
 
     // File sync routes (TASK-007.2.1.4)
     // this.app.use(`${apiV1}/files`, fileRoutes);

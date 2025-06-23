@@ -4,7 +4,7 @@ import { logger } from '../utils/logger';
 import { config } from '../config';
 
 export interface HealthStatus {
-  status: 'ok' | 'degraded' | 'error';
+  status: 'healthy' | 'degraded' | 'error';
   timestamp: string;
   uptime: number;
   version: string;
@@ -78,7 +78,7 @@ export class HealthController {
       const uptime = Math.floor((Date.now() - this.startTime) / 1000);
 
       const healthStatus: HealthStatus = {
-        status: 'ok',
+        status: 'healthy',
         timestamp: new Date().toISOString(),
         uptime,
         version: '1.0.0',
@@ -94,7 +94,7 @@ export class HealthController {
       }
 
       // Set appropriate status code
-      const statusCode = healthStatus.status === 'ok' ? 200 : 503;
+      const statusCode = healthStatus.status === 'healthy' ? 200 : 503;
 
       res.status(statusCode).json(healthStatus);
     } catch (error) {
@@ -145,7 +145,7 @@ export class HealthController {
       const p99 = sortedTimes[p99Index] || 0;
 
       // Determine overall status
-      let overallStatus: 'ok' | 'degraded' | 'error' = 'ok';
+      let overallStatus: 'healthy' | 'degraded' | 'error' = 'healthy';
       if (databaseStatus === 'error' || errorRate > 10) {
         overallStatus = 'error';
       } else if (databaseStatus !== 'connected' || errorRate > 5 || avgResponseTime > 1000) {
@@ -187,7 +187,8 @@ export class HealthController {
       };
 
       // Set appropriate status code
-      const statusCode = overallStatus === 'ok' ? 200 : overallStatus === 'degraded' ? 200 : 503;
+      const statusCode =
+        overallStatus === 'healthy' ? 200 : overallStatus === 'degraded' ? 200 : 503;
 
       res.status(statusCode).json(detailedStatus);
     } catch (error) {

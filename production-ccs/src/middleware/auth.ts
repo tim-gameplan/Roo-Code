@@ -26,7 +26,7 @@ export class AuthMiddleware {
         res.status(401).json({
           success: false,
           error: 'Authentication required',
-          code: 'AUTH_REQUIRED',
+          code: 'UNAUTHORIZED',
         });
         return;
       }
