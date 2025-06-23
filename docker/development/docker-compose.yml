@@ -1,0 +1,99 @@
+services:
+  # PostgreSQL Database for Development
+  postgres:
+    image: postgres:15-alpine
+    container_name: roo-code-postgres-dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: roo_code_dev
+      POSTGRES_USER: roo_dev
+      POSTGRES_PASSWORD: dev_password_2024
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=C --lc-ctype=C"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ../shared/database/migrations:/docker-entrypoint-initdb.d/migrations:ro
+      - ../shared/database/schemas:/docker-entrypoint-initdb.d/schemas:ro
+      - ../shared/database/seeds:/docker-entrypoint-initdb.d/seeds:ro
+      - ./postgres/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+    networks:
+      - roo-code-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U roo_dev -d roo_code_dev"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # Redis Cache for Development
+  redis:
+    image: redis:7-alpine
+    container_name: roo-code-redis-dev
+    restart: unless-stopped
+    command: redis-server /usr/local/etc/redis/redis.conf
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+      - ./redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
+    networks:
+      - roo-code-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+
+  # Database Administration Tool
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: roo-code-pgadmin-dev
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: dev@roo-code.local
+      PGADMIN_DEFAULT_PASSWORD: dev_admin_2024
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - "8080:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    networks:
+      - roo-code-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # Redis Commander for Redis Management
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: roo-code-redis-commander-dev
+    restart: unless-stopped
+    environment:
+      REDIS_HOSTS: local:redis:6379
+      HTTP_USER: dev
+      HTTP_PASSWORD: dev_redis_2024
+    ports:
+      - "8081:8081"
+    networks:
+      - roo-code-network
+    depends_on:
+      redis:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+    driver: local
+    name: roo-code-postgres-dev-data
+  redis_data:
+    driver: local
+    name: roo-code-redis-dev-data
+  pgadmin_data:
+    driver: local
+    name: roo-code-pgadmin-dev-data
+
+networks:
+  roo-code-network:
+    driver: bridge
+    name: roo-code-dev-network

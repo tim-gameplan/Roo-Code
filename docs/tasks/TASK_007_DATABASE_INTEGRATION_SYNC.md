@@ -81,6 +81,385 @@ graph TB
 
 ---
 
+## 🔧 **TASK-007.0: Docker Infrastructure Setup**
+
+### **Objective**
+
+Create comprehensive Docker infrastructure for PostgreSQL and Redis deployment supporting both development and production environments with clean project organization.
+
+### **Duration**: 3 days
+
+### **Assignee**: DevOps Engineer
+
+### **Labels**: `docker`, `infrastructure`, `deployment`
+
+#### **TASK-007.0.1: Project Structure & Development Environment**
+
+**Estimate**: 1 day  
+**Priority**: Critical
+
+**Description**:
+Create clean Docker project structure and development environment setup.
+
+**Project Structure**:
+
+```
+/Roo-Code/
+├── docker/                          # NEW: All Docker infrastructure
+│   ├── development/                 # Development environment
+│   │   ├── docker-compose.yml       # Main dev compose file
+│   │   ├── postgres/                # PostgreSQL dev config
+│   │   │   ├── Dockerfile
+│   │   │   ├── init/                # Schema initialization
+│   │   │   └── config/              # PostgreSQL configuration
+│   │   ├── redis/                   # Redis dev config
+│   │   │   ├── Dockerfile
+│   │   │   └── config/              # Redis configuration
+│   │   └── scripts/                 # Development scripts
+│   │       ├── start-dev.sh
+│   │       ├── stop-dev.sh
+│   │       └── reset-db.sh
+│   ├── production/                  # Production environment
+│   │   ├── docker-compose.yml       # Production compose file
+│   │   ├── postgres/                # Production PostgreSQL
+│   │   ├── redis/                   # Production Redis
+│   │   └── scripts/                 # Production scripts
+│   ├── shared/                      # Shared configurations
+│   │   ├── database/                # Database schemas & migrations
+│   │   │   ├── migrations/
+│   │   │   ├── seeds/
+│   │   │   └── schemas/
+│   │   └── monitoring/              # Health checks & monitoring
+│   └── README.md                    # Docker setup guide
+└── docs/deployment/                 # NEW: Deployment documentation
+    ├── docker-setup.md
+    ├── local-development.md
+    └── production-deployment.md
+```
+
+**Development Docker Compose**:
+
+```yaml
+# docker/development/docker-compose.yml
+version: "3.8"
+services:
+    postgres:
+        build: ./postgres
+        environment:
+            POSTGRES_DB: roo_cloud_dev
+            POSTGRES_USER: roo_dev
+            POSTGRES_PASSWORD: dev_password
+        ports:
+            - "5432:5432"
+        volumes:
+            - postgres_dev_data:/var/lib/postgresql/data
+            - ../shared/database/init:/docker-entrypoint-initdb.d
+            - ../shared/database/migrations:/migrations
+        healthcheck:
+            test: ["CMD-SHELL", "pg_isready -U roo_dev -d roo_cloud_dev"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+
+    redis:
+        build: ./redis
+        ports:
+            - "6379:6379"
+        volumes:
+            - redis_dev_data:/data
+        command: redis-server --appendonly yes --notify-keyspace-events Ex
+        healthcheck:
+            test: ["CMD", "redis-cli", "ping"]
+            interval: 10s
+            timeout: 3s
+            retries: 3
+
+    roo-cloud-service:
+        build:
+            context: ../../production-ccs
+            dockerfile: Dockerfile.dev
+        ports:
+            - "3001:3001"
+            - "9229:9229" # Debug port
+        environment:
+            - NODE_ENV=development
+            - DATABASE_URL=postgresql://roo_dev:dev_password@postgres:5432/roo_cloud_dev
+            - REDIS_URL=redis://redis:6379
+            - DEBUG=roo:*
+        depends_on:
+            postgres:
+                condition: service_healthy
+            redis:
+                condition: service_healthy
+        volumes:
+            - ../../production-ccs:/app
+            - /app/node_modules
+        command: npm run dev
+
+volumes:
+    postgres_dev_data:
+    redis_dev_data:
+```
+
+**Acceptance Criteria**:
+
+- [ ] Clean Docker project structure created
+- [ ] Development environment with hot reloading
+- [ ] PostgreSQL accessible on localhost:5432
+- [ ] Redis accessible on localhost:6379
+- [ ] Health checks for all services
+- [ ] One-command development setup
+
+**Implementation Steps**:
+
+1. Create `/docker/` directory structure
+2. Set up development Docker Compose configuration
+3. Create PostgreSQL development container with init scripts
+4. Create Redis development container with persistence
+5. Add development scripts and documentation
+
+#### **TASK-007.0.2: Database Container Configuration**
+
+**Estimate**: 1 day  
+**Priority**: High
+
+**Description**:
+Configure optimized PostgreSQL and Redis containers with initialization, performance tuning, and monitoring.
+
+**PostgreSQL Container**:
+
+```dockerfile
+# docker/development/postgres/Dockerfile
+FROM postgres:15-alpine
+
+# Install additional extensions
+RUN apk add --no-cache postgresql-contrib
+
+# Copy custom configuration
+COPY config/postgresql.conf /etc/postgresql/postgresql.conf
+COPY config/pg_hba.conf /etc/postgresql/pg_hba.conf
+
+# Copy initialization scripts
+COPY init/ /docker-entrypoint-initdb.d/
+
+# Set custom configuration
+CMD ["postgres", "-c", "config_file=/etc/postgresql/postgresql.conf"]
+```
+
+**PostgreSQL Configuration**:
+
+```conf
+# docker/development/postgres/config/postgresql.conf
+# Performance tuning for development
+shared_buffers = 256MB
+effective_cache_size = 1GB
+maintenance_work_mem = 64MB
+checkpoint_completion_target = 0.9
+wal_buffers = 16MB
+default_statistics_target = 100
+random_page_cost = 1.1
+effective_io_concurrency = 200
+
+# Logging for development
+log_statement = 'all'
+log_duration = on
+log_min_duration_statement = 100ms
+
+# Connection settings
+max_connections = 100
+```
+
+**Redis Container**:
+
+```dockerfile
+# docker/development/redis/Dockerfile
+FROM redis:7-alpine
+
+# Copy custom configuration
+COPY config/redis.conf /usr/local/etc/redis/redis.conf
+
+# Create data directory
+RUN mkdir -p /data
+
+# Set permissions
+RUN chown redis:redis /data
+
+CMD ["redis-server", "/usr/local/etc/redis/redis.conf"]
+```
+
+**Redis Configuration**:
+
+```conf
+# docker/development/redis/config/redis.conf
+# Persistence
+appendonly yes
+appendfsync everysec
+save 900 1
+save 300 10
+save 60 10000
+
+# Memory management
+maxmemory 512mb
+maxmemory-policy allkeys-lru
+
+# Pub/Sub for real-time features
+notify-keyspace-events Ex
+
+# Security (development)
+requirepass dev_redis_password
+
+# Logging
+loglevel notice
+```
+
+**Acceptance Criteria**:
+
+- [ ] Optimized PostgreSQL configuration for development
+- [ ] Redis configured with persistence and pub/sub
+- [ ] Database initialization scripts working
+- [ ] Performance monitoring enabled
+- [ ] Health checks implemented
+
+**Implementation Steps**:
+
+1. Create PostgreSQL Dockerfile with extensions
+2. Add PostgreSQL performance configuration
+3. Create Redis Dockerfile with custom config
+4. Add database initialization scripts
+5. Implement health checks and monitoring
+
+#### **TASK-007.0.3: Production Environment & Deployment**
+
+**Estimate**: 1 day  
+**Priority**: Medium
+
+**Description**:
+Create production-ready Docker configuration with security hardening, monitoring, and deployment scripts.
+
+**Production Docker Compose**:
+
+```yaml
+# docker/production/docker-compose.yml
+version: "3.8"
+services:
+    postgres:
+        build: ./postgres
+        environment:
+            POSTGRES_DB: ${POSTGRES_DB}
+            POSTGRES_USER: ${POSTGRES_USER}
+            POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+        volumes:
+            - postgres_prod_data:/var/lib/postgresql/data
+            - ../shared/database/backups:/backups
+            - ../shared/database/migrations:/migrations
+        restart: unless-stopped
+        healthcheck:
+            test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+            interval: 30s
+            timeout: 10s
+            retries: 3
+        networks:
+            - roo_network
+
+    redis:
+        build: ./redis
+        environment:
+            REDIS_PASSWORD: ${REDIS_PASSWORD}
+        volumes:
+            - redis_prod_data:/data
+        restart: unless-stopped
+        healthcheck:
+            test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+            interval: 30s
+            timeout: 5s
+            retries: 3
+        networks:
+            - roo_network
+
+    roo-cloud-service:
+        build:
+            context: ../../production-ccs
+            dockerfile: Dockerfile.prod
+        environment:
+            - NODE_ENV=production
+            - DATABASE_URL=${DATABASE_URL}
+            - REDIS_URL=${REDIS_URL}
+        depends_on:
+            postgres:
+                condition: service_healthy
+            redis:
+                condition: service_healthy
+        restart: unless-stopped
+        networks:
+            - roo_network
+        ports:
+            - "3001:3001"
+
+volumes:
+    postgres_prod_data:
+    redis_prod_data:
+
+networks:
+    roo_network:
+        driver: bridge
+```
+
+**Deployment Scripts**:
+
+```bash
+#!/bin/bash
+# docker/production/scripts/deploy.sh
+
+set -e
+
+echo "🚀 Starting Roo Cloud Service Production Deployment"
+
+# Load environment variables
+if [ -f .env.production ]; then
+    export $(cat .env.production | xargs)
+else
+    echo "❌ .env.production file not found"
+    exit 1
+fi
+
+# Build and start services
+echo "📦 Building containers..."
+docker-compose -f docker-compose.yml build
+
+echo "🔄 Starting services..."
+docker-compose -f docker-compose.yml up -d
+
+# Wait for services to be healthy
+echo "⏳ Waiting for services to be healthy..."
+docker-compose -f docker-compose.yml exec postgres pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}
+docker-compose -f docker-compose.yml exec redis redis-cli -a ${REDIS_PASSWORD} ping
+
+# Run database migrations
+echo "🗄️ Running database migrations..."
+docker-compose -f docker-compose.yml exec roo-cloud-service npm run migrate
+
+echo "✅ Deployment completed successfully!"
+```
+
+**Acceptance Criteria**:
+
+- [ ] Production-optimized container configurations
+- [ ] Environment variable configuration
+- [ ] Security hardening applied
+- [ ] Automated deployment scripts
+- [ ] Backup and recovery procedures
+- [ ] Monitoring and logging setup
+
+**Implementation Steps**:
+
+1. Create production Docker Compose configuration
+2. Add security hardening and environment variables
+3. Create deployment and management scripts
+4. Implement backup and recovery procedures
+5. Add monitoring and logging configuration
+
+---
+
 ## 🔧 **TASK-007.1: Database Infrastructure**
 
 ### **Objective**
