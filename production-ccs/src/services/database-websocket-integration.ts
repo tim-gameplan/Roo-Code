@@ -45,7 +45,7 @@ export interface RealTimeMessageEvent {
   messageId: string;
   conversationId: string;
   userId: string;
-  deviceId?: string;
+  deviceId: string;
   messageType: string;
   content: Record<string, any>;
   metadata: Record<string, any>;
