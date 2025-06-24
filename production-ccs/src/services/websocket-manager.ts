@@ -429,7 +429,7 @@ export class EnhancedWebSocketConnection extends EventEmitter {
       messageId,
       status,
       timestamp: Date.now(),
-      error,
+      ...(error && { error }),
     };
 
     const ackMessage: MobileMessage = {
