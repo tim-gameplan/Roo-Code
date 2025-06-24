@@ -1,0 +1,23 @@
+{
+	"name": "@roo-code/prettier-mcp-server",
+	"version": "1.0.0",
+	"description": "MCP server for Prettier code formatting",
+	"type": "module",
+	"main": "dist/index.js",
+	"bin": {
+		"prettier-mcp-server": "dist/index.js"
+	},
+	"scripts": {
+		"build": "tsc",
+		"dev": "tsc --watch",
+		"start": "node dist/index.js"
+	},
+	"dependencies": {
+		"@modelcontextprotocol/sdk": "^1.0.0",
+		"prettier": "^3.4.2"
+	},
+	"devDependencies": {
+		"typescript": "^5.4.5",
+		"@types/node": "^20.0.0"
+	}
+}

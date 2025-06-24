@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roo Remote UI - Proof of Concept</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>🤖 Roo Remote UI</h1>
+            <p class="subtitle">Proof of Concept</p>
+            <div class="status-indicator" id="status-indicator">
+                <span class="status-dot" id="status-dot"></span>
+                <span class="status-text" id="status-text">Connecting...</span>
+            </div>
+        </header>
+
+        <main class="main">
+            <div class="message-form-container">
+                <form id="message-form" class="message-form">
+                    <div class="input-group">
+                        <label for="message-input" class="input-label">
+                            Send message to Roo:
+                        </label>
+                        <textarea 
+                            id="message-input" 
+                            name="message" 
+                            class="message-input"
+                            placeholder="Type your message to Roo here..."
+                            rows="4"
+                            required
+                        ></textarea>
+                    </div>
+                    
+                    <button type="submit" class="submit-button" id="submit-button">
+                        <span class="button-text">Send to Roo</span>
+                        <span class="button-spinner" id="button-spinner">⏳</span>
+                    </button>
+                </form>
+            </div>
+
+            <div class="response-container" id="response-container">
+                <h3>Server Response:</h3>
+                <div class="response-content" id="response-content">
+                    <p class="response-placeholder">No messages sent yet.</p>
+                </div>
+            </div>
+
+            <div class="info-container">
+                <h3>How it works:</h3>
+                <ol class="info-list">
+                    <li>Type your message in the text area above</li>
+                    <li>Click "Send to Roo" to submit</li>
+                    <li>Message is sent to Central Communication Server</li>
+                    <li>CCS forwards message via IPC to Roo extension</li>
+                    <li>Roo extension injects message into existing webview</li>
+                    <li>You can then interact with Roo normally in VS Code</li>
+                </ol>
+            </div>
+        </main>
+
+        <footer class="footer">
+            <div class="footer-links">
+                <a href="/status" target="_blank" class="footer-link">Server Status</a>
+                <a href="/health" target="_blank" class="footer-link">Health Check</a>
+            </div>
+            <p class="footer-text">
+                Roo Remote UI PoC - Testing simplified remote access approach
+            </p>
+        </footer>
+    </div>
+
+    <script>
+        // DOM elements
+        const form = document.getElementById('message-form');
+        const messageInput = document.getElementById('message-input');
+        const submitButton = document.getElementById('submit-button');
+        const buttonText = document.querySelector('.button-text');
+        const buttonSpinner = document.getElementById('button-spinner');
+        const responseContainer = document.getElementById('response-container');
+        const responseContent = document.getElementById('response-content');
+        const statusDot = document.getElementById('status-dot');
+        const statusText = document.getElementById('status-text');
+
+        // State management
+        let isSubmitting = false;
+
+        // Check server status on load
+        async function checkServerStatus() {
+            try {
+                const response = await fetch('/status');
+                const data = await response.json();
+                
+                updateStatusIndicator(data.ipcConnected, data);
+            } catch (error) {
+                console.error('Error checking server status:', error);
+                updateStatusIndicator(false, { error: error.message });
+            }
+        }
+
+        // Update status indicator
+        function updateStatusIndicator(connected, data) {
+            if (connected) {
+                statusDot.className = 'status-dot connected';
+                statusText.textContent = 'Connected to Roo';
+            } else {
+                statusDot.className = 'status-dot disconnected';
+                statusText.textContent = data.error ? 'Connection Error' : 'Disconnected';
+            }
+        }
+
+        // Handle form submission
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            if (isSubmitting) return;
+            
+            const message = messageInput.value.trim();
+            if (!message) {
+                alert('Please enter a message');
+                return;
+            }
+
+            // Update UI to show loading state
+            isSubmitting = true;
+            submitButton.disabled = true;
+            buttonText.style.display = 'none';
+            buttonSpinner.style.display = 'inline';
+
+            try {
+                const response = await fetch('/send-message', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ message: message })
+                });
+
+                const data = await response.json();
+                
+                // Display response
+                displayResponse(data, response.ok);
+                
+                // Clear input if successful
+                if (response.ok && data.success) {
+                    messageInput.value = '';
+                }
+
+                // Update status
+                checkServerStatus();
+
+            } catch (error) {
+                console.error('Error sending message:', error);
+                displayResponse({
+                    success: false,
+                    message: 'Network error: ' + error.message
+                }, false);
+            } finally {
+                // Reset UI
+                isSubmitting = false;
+                submitButton.disabled = false;
+                buttonText.style.display = 'inline';
+                buttonSpinner.style.display = 'none';
+            }
+        });
+
+        // Display server response
+        function displayResponse(data, isSuccess) {
+            const timestamp = new Date().toLocaleTimeString();
+            const statusClass = isSuccess && data.success ? 'success' : 'error';
+            
+            responseContent.innerHTML = `
+                <div class="response-item ${statusClass}">
+                    <div class="response-header">
+                        <span class="response-status">${data.success ? '✅' : '❌'}</span>
+                        <span class="response-time">${timestamp}</span>
+                    </div>
+                    <div class="response-message">${data.message}</div>
+                    ${data.text ? `<div class="response-text">Message: "${data.text}"</div>` : ''}
+                    ${data.queued ? '<div class="response-note">⏳ Message queued (IPC not connected)</div>' : ''}
+                    ${data.error ? `<div class="response-error">Error: ${data.error}</div>` : ''}
+                </div>
+            `;
+        }
+
+        // Auto-resize textarea
+        messageInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = this.scrollHeight + 'px';
+        });
+
+        // Check status periodically
+        setInterval(checkServerStatus, 5000);
+
+        // Initial status check
+        checkServerStatus();
+
+        // Focus on message input
+        messageInput.focus();
+    </script>
+</body>
+</html>

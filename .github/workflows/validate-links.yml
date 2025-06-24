@@ -1,0 +1,49 @@
+name: Validate Documentation Links
+
+on:
+  pull_request:
+    paths:
+      - 'docs/**'
+      - '.github/ISSUE_TEMPLATE/**'
+      - 'README.md'
+      - '**/README.md'
+  push:
+    branches: [ main ]
+    paths:
+      - 'docs/**'
+      - '.github/ISSUE_TEMPLATE/**'
+
+jobs:
+  validate-links:
+    runs-on: ubuntu-latest
+    name: Check documentation links
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Validate Markdown links
+        uses: gaurav-nelson/github-action-markdown-link-check@v1
+        with:
+          use-quiet-mode: 'yes'
+          use-verbose-mode: 'yes'
+          config-file: '.github/workflows/link-check-config.json'
+          
+      - name: Check for broken GitHub links
+        run: |
+          echo "🔍 Checking for relative documentation links..."
+          
+          # Check for potentially broken relative links
+          broken_links=$(grep -r "\](docs/" docs/ .github/ README.md 2>/dev/null || true)
+          
+          if [ -n "$broken_links" ]; then
+            echo "❌ Found potentially broken relative links:"
+            echo "$broken_links"
+            echo ""
+            echo "💡 Use full GitHub URLs instead:"
+            echo "   ❌ [text](docs/file.md)"
+            echo "   ✅ [text](https://github.com/tim-gameplan/Roo-Code/blob/main/docs/file.md)"
+            exit 1
+          else
+            echo "✅ No broken relative links found"
+          fi

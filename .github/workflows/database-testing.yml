@@ -1,0 +1,87 @@
+name: Database Migration Testing
+
+on:
+  pull_request:
+    paths:
+      - 'database/**'
+      - 'migrations/**'
+      - '**/schema.sql'
+      - 'src/services/database/**'
+      - 'production-ccs/src/**'
+  push:
+    branches: [main]
+    paths:
+      - 'database/**'
+      - 'migrations/**'
+
+jobs:
+  test-database-changes:
+    runs-on: ubuntu-latest
+    name: Test Database Changes
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_USER: test_user
+          POSTGRES_DB: test_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+          
+      redis:
+        image: redis:7
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: |
+          if [ -f "production-ccs/package.json" ]; then
+            cd production-ccs && npm install
+          fi
+          
+      - name: Test database connection
+        run: |
+          # Test PostgreSQL connection
+          PGPASSWORD=test_password psql -h localhost -U test_user -d test_db -c "SELECT version();"
+          
+          # Test Redis connection
+          redis-cli -h localhost ping
+          
+      - name: Run database tests
+        run: |
+          echo "🧪 Running database integration tests..."
+          # Add your database test commands here
+          # Example: npm run test:database
+          
+      - name: Test migration scripts
+        run: |
+          echo "🔄 Testing database migrations..."
+          # Add migration testing logic here
+          # Example: npm run migrate:test
+          
+      - name: Validate schema changes
+        run: |
+          echo "📋 Validating database schema..."
+          # Add schema validation logic here
+          # Example: npm run schema:validate

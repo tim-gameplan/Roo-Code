@@ -110,6 +110,11 @@ export async function activate(context: vscode.ExtensionContext) {
 	const provider = new ClineProvider(context, outputChannel, "sidebar", contextProxy, codeIndexManager, mdmService)
 	TelemetryService.instance.setProvider(provider)
 
+	// TASK-002: Setup Remote UI IPC listener
+	console.log("🔧 [DEBUG] Extension activating with IPC support")
+	provider.setupRemoteUIListener()
+	console.log("🔧 [DEBUG] setupRemoteUIListener() called from activation")
+
 	if (codeIndexManager) {
 		context.subscriptions.push(codeIndexManager)
 	}

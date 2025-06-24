@@ -1,0 +1,128 @@
+{
+  "timestamp": "2025-06-21T23:21:28.168Z",
+  "phase": "Phase 1 - Basic Functionality Testing",
+  "tests": [
+    {
+      "testName": "Server Startup",
+      "passed": true,
+      "message": "CCS server started successfully on port 3000",
+      "details": {
+        "port": 3000,
+        "protocol": "http"
+      },
+      "timestamp": "2025-06-21T23:21:30.196Z"
+    },
+    {
+      "testName": "Health Check Endpoint",
+      "passed": true,
+      "message": "Health endpoint responds correctly",
+      "details": {
+        "statusCode": 200,
+        "responseTime": 1,
+        "healthData": {
+          "status": "healthy",
+          "uptime": 1.989355166,
+          "timestamp": "2025-06-21T23:21:30.198Z"
+        }
+      },
+      "timestamp": "2025-06-21T23:21:30.198Z"
+    },
+    {
+      "testName": "Static Asset: Main HTML Page",
+      "passed": true,
+      "message": "Main HTML Page loads successfully",
+      "details": {
+        "path": "/",
+        "statusCode": 200,
+        "responseTime": 2,
+        "contentLength": 8012
+      },
+      "timestamp": "2025-06-21T23:21:30.201Z"
+    },
+    {
+      "testName": "Static Asset: CSS Stylesheet",
+      "passed": true,
+      "message": "CSS Stylesheet loads successfully",
+      "details": {
+        "path": "/style.css",
+        "statusCode": 200,
+        "responseTime": 1,
+        "contentLength": 7710
+      },
+      "timestamp": "2025-06-21T23:21:30.202Z"
+    },
+    {
+      "testName": "Send Message Endpoint",
+      "passed": true,
+      "message": "Send message endpoint accepts and processes requests",
+      "details": {
+        "statusCode": 200,
+        "responseTime": 8,
+        "testMessage": "Test message for Phase 1 validation",
+        "responseData": {
+          "success": false,
+          "message": "IPC not connected, message queued",
+          "queued": true
+        }
+      },
+      "timestamp": "2025-06-21T23:21:30.210Z"
+    },
+    {
+      "testName": "Error Handling: Invalid JSON",
+      "passed": false,
+      "message": "Expected status 400, got 500",
+      "details": {
+        "testName": "Invalid JSON",
+        "expectedStatus": 400,
+        "actualStatus": 500,
+        "testData": "invalid json"
+      },
+      "timestamp": "2025-06-21T23:21:30.212Z"
+    },
+    {
+      "testName": "Error Handling: Missing Message Field",
+      "passed": true,
+      "message": "Correctly returned status 400 for Missing Message Field",
+      "details": {
+        "testName": "Missing Message Field",
+        "expectedStatus": 400,
+        "actualStatus": 400,
+        "testData": "{\"notMessage\":\"test\"}"
+      },
+      "timestamp": "2025-06-21T23:21:30.214Z"
+    },
+    {
+      "testName": "Error Handling: Non-existent Endpoint",
+      "passed": true,
+      "message": "Correctly returned status 404 for Non-existent Endpoint",
+      "details": {
+        "testName": "Non-existent Endpoint",
+        "expectedStatus": 404,
+        "actualStatus": 404,
+        "testData": null
+      },
+      "timestamp": "2025-06-21T23:21:30.214Z"
+    },
+    {
+      "testName": "IPC Communication Setup",
+      "passed": false,
+      "message": "IPC client is not properly configured",
+      "details": {
+        "healthData": {
+          "status": "healthy",
+          "uptime": 2.007146333,
+          "timestamp": "2025-06-21T23:21:30.215Z"
+        }
+      },
+      "timestamp": "2025-06-21T23:21:30.216Z"
+    }
+  ],
+  "summary": {
+    "total": 9,
+    "passed": 7,
+    "failed": 2,
+    "warnings": 0,
+    "successRate": "77.78",
+    "completedAt": "2025-06-21T23:21:30.217Z"
+  }
+}
