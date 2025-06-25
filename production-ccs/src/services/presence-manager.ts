@@ -178,10 +178,10 @@ export class PresenceManagerService extends EventEmitter {
     const userPresence: UserPresence = {
       userId,
       aggregatedStatus,
-      devices: new Map(userDevices.map((d) => [d.deviceId, d])),
+      devices: new Map(userDevices.map((dp) => [dp.deviceId, dp])),
       lastActivity,
-      statusMessage: existingUser?.statusMessage,
-      customStatus: existingUser?.customStatus,
+      ...(existingUser?.statusMessage && { statusMessage: existingUser.statusMessage }),
+      ...(existingUser?.customStatus && { customStatus: existingUser.customStatus }),
     };
 
     this.userPresences.set(userId, userPresence);
@@ -225,8 +225,17 @@ export class PresenceManagerService extends EventEmitter {
       return;
     }
 
-    userPresence.statusMessage = statusMessage;
-    userPresence.customStatus = customStatus;
+    if (statusMessage !== undefined) {
+      userPresence.statusMessage = statusMessage;
+    } else {
+      delete userPresence.statusMessage;
+    }
+
+    if (customStatus !== undefined) {
+      userPresence.customStatus = customStatus;
+    } else {
+      delete userPresence.customStatus;
+    }
 
     this.userPresences.set(userId, userPresence);
     this.broadcastPresenceUpdate(userPresence);
@@ -255,7 +264,7 @@ export class PresenceManagerService extends EventEmitter {
       userIds: new Set(userIds),
       deviceIds: new Set(deviceIds),
       callback,
-      filters,
+      ...(filters && { filters }),
     };
 
     this.subscriptions.set(subscriberId, subscription);
@@ -341,7 +350,8 @@ export class PresenceManagerService extends EventEmitter {
    */
   private broadcastPresenceUpdate(presence: UserPresence | DevicePresence): void {
     const now = Date.now();
-    const presenceId = 'userId' in presence ? presence.userId : presence.deviceId;
+    const presenceId =
+      'aggregatedStatus' in presence ? presence.userId : (presence as DevicePresence).deviceId;
 
     // Check broadcast throttle
     const lastBroadcast = this.broadcastThrottles.get(presenceId) || 0;
@@ -382,10 +392,11 @@ export class PresenceManagerService extends EventEmitter {
       return subscription.userIds.size === 0 || subscription.userIds.has(presence.userId);
     } else {
       // Device presence
+      const devicePresence = presence as DevicePresence;
       return (
         subscription.deviceIds.size === 0 ||
-        subscription.deviceIds.has(presence.deviceId) ||
-        subscription.userIds.has(presence.userId)
+        subscription.deviceIds.has(devicePresence.deviceId) ||
+        subscription.userIds.has(devicePresence.userId)
       );
     }
   }
@@ -569,7 +580,7 @@ export class PresenceManagerService extends EventEmitter {
 
     for (const [userId, userPresence] of this.userPresences.entries()) {
       if (userPresence.customStatus?.expiresAt && userPresence.customStatus.expiresAt <= now) {
-        userPresence.customStatus = undefined;
+        delete userPresence.customStatus;
         this.broadcastPresenceUpdate(userPresence);
 
         logger.debug('Custom status expired', { userId });

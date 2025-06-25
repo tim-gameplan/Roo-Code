@@ -204,7 +204,7 @@ export class RealTimeMessagingService extends EventEmitter {
 
     // Find the stream containing this message
     let targetStream: MessageStream | undefined;
-    for (const stream of this.streams.values()) {
+    for (const stream of Array.from(this.streams.values())) {
       if (stream.pendingMessages.has(messageId)) {
         targetStream = stream;
         break;
@@ -273,7 +273,7 @@ export class RealTimeMessagingService extends EventEmitter {
     }
 
     // Clear pending acknowledgment timeouts
-    for (const messageId of stream.pendingMessages.keys()) {
+    for (const messageId of Array.from(stream.pendingMessages.keys())) {
       this.clearAcknowledmentTimeout(messageId);
     }
 
@@ -318,13 +318,18 @@ export class RealTimeMessagingService extends EventEmitter {
     });
 
     // Implement backpressure relief strategies
-    this.relieveBackpressure(stream);
+    this.relieveBackpressure(stream).catch((error) => {
+      logger.error('Failed to relieve backpressure', {
+        streamId: stream.streamId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    });
   }
 
   /**
    * Relieve backpressure by processing queued messages
    */
-  private relieveBackpressure(stream: MessageStream): void {
+  private async relieveBackpressure(stream: MessageStream): Promise<void> {
     // Process high-priority messages first
     const highPriorityMessages = stream.messageQueue
       .filter(
@@ -332,19 +337,19 @@ export class RealTimeMessagingService extends EventEmitter {
       )
       .sort((a, b) => {
         const priorityOrder: Record<string, number> = { critical: 0, high: 1, normal: 2, low: 3 };
-        const aPriority = a.optimization?.priority || 'normal';
-        const bPriority = b.optimization?.priority || 'normal';
-        return priorityOrder[aPriority] - priorityOrder[bPriority];
+        const aPriority = a.optimization?.priority ?? 'normal';
+        const bPriority = b.optimization?.priority ?? 'normal';
+        return (priorityOrder[aPriority] ?? 2) - (priorityOrder[bPriority] ?? 2);
       });
 
     // Deliver high-priority messages immediately
-    highPriorityMessages.forEach((message) => {
-      this.deliverMessage(message);
+    for (const message of highPriorityMessages) {
+      await this.deliverMessage(message);
       const index = stream.messageQueue.indexOf(message);
       if (index > -1) {
         stream.messageQueue.splice(index, 1);
       }
-    });
+    }
 
     // Check if backpressure is relieved
     if (!this.isStreamBackpressured(stream)) {
@@ -531,7 +536,7 @@ export class RealTimeMessagingService extends EventEmitter {
     const timeWindow = 10000; // 10 seconds
 
     let recentMessages = 0;
-    for (const stream of this.streams.values()) {
+    for (const stream of Array.from(this.streams.values())) {
       if (now - stream.metrics.lastActivity < timeWindow) {
         recentMessages += stream.metrics.messagesDelivered;
       }
@@ -547,7 +552,7 @@ export class RealTimeMessagingService extends EventEmitter {
     const now = Date.now();
     const inactivityThreshold = 1800000; // 30 minutes
 
-    for (const [streamId, stream] of this.streams.entries()) {
+    for (const [streamId, stream] of Array.from(this.streams.entries())) {
       if (now - stream.metrics.lastActivity > inactivityThreshold) {
         logger.info('Cleaning up inactive stream', {
           streamId,
@@ -584,12 +589,12 @@ export class RealTimeMessagingService extends EventEmitter {
    */
   public shutdown(): void {
     // Close all streams
-    for (const streamId of this.streams.keys()) {
+    for (const streamId of Array.from(this.streams.keys())) {
       this.closeStream(streamId);
     }
 
     // Clear all timeouts
-    for (const timeout of this.acknowledgmentTimeouts.values()) {
+    for (const timeout of Array.from(this.acknowledgmentTimeouts.values())) {
       clearTimeout(timeout);
     }
     this.acknowledgmentTimeouts.clear();

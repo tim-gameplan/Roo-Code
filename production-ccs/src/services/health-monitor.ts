@@ -529,6 +529,39 @@ export class HealthMonitor extends EventEmitter {
   }
 
   /**
+   * Record message latency for performance monitoring
+   */
+  public recordMessageLatency(latency: number): void {
+    // In a real implementation, this would store latency metrics
+    // For now, we'll just log high latency messages
+    if (latency > this.config.alertThresholds.responseTime) {
+      logger.warn('High message latency detected', { latency });
+    }
+  }
+
+  /**
+   * Increment message count for throughput monitoring
+   */
+  public incrementMessageCount(): void {
+    // In a real implementation, this would increment a counter
+    // For now, we'll just track that a message was processed
+    logger.debug('Message processed');
+  }
+
+  /**
+   * Get health metrics
+   */
+  public getMetrics(): any {
+    return {
+      healthChecks: this.lastResults.size,
+      activeAlerts: this.getActiveAlerts().length,
+      uptime: Date.now() - Date.now(), // Simplified uptime
+      lastCheckTime: new Date(),
+      overallStatus: this.getOverallHealth(),
+    };
+  }
+
+  /**
    * Destroy the health monitor and clean up resources
    */
   public async destroy(): Promise<void> {

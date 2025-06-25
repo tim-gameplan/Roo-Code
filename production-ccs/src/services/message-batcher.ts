@@ -118,7 +118,7 @@ export class MessageBatcher {
   private clearBatchTimer(): void {
     if (this.batchTimer) {
       clearTimeout(this.batchTimer);
-      this.batchTimer = undefined;
+      this.batchTimer = undefined as any;
     }
   }
 

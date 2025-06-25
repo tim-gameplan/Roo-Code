@@ -258,7 +258,7 @@ describe('ConversationService', () => {
       expect(result.conversations).toHaveLength(1);
       expect(result.total_count).toBe(10);
       expect(result.has_more).toBe(false);
-      expect(result.conversations[0].message_count).toBe(5);
+      expect(result.conversations[0]?.message_count).toBe(5);
     });
 
     it('should filter by workspace path', async () => {
@@ -579,7 +579,7 @@ describe('ConversationService', () => {
       expect(result.messages).toHaveLength(1);
       expect(result.total_count).toBe(5);
       expect(result.has_more).toBe(false);
-      expect(result.messages[0].content.text).toBe('Hello');
+      expect(result.messages[0]?.content.text).toBe('Hello');
     });
 
     it('should filter by message types', async () => {

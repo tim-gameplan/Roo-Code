@@ -269,6 +269,61 @@ export class DeviceRegistry extends EventEmitter {
   }
 
   /**
+   * Validate device registration
+   */
+  public async validateDeviceRegistration(deviceInfo: DeviceInfo): Promise<boolean> {
+    try {
+      // Basic validation checks
+      if (!deviceInfo.deviceId || !deviceInfo.deviceType || !deviceInfo.userId) {
+        return false;
+      }
+
+      // Check if device ID is valid format
+      if (typeof deviceInfo.deviceId !== 'string' || deviceInfo.deviceId.length < 3) {
+        return false;
+      }
+
+      // Check if user ID is valid
+      if (typeof deviceInfo.userId !== 'string' || deviceInfo.userId.length < 1) {
+        return false;
+      }
+
+      // Additional validation logic can be added here
+      return true;
+    } catch (error) {
+      logger.error('Device registration validation failed', {
+        deviceId: deviceInfo.deviceId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return false;
+    }
+  }
+
+  /**
+   * Update device status
+   */
+  public updateDeviceStatus(deviceId: string, status: DeviceRegistration['status']): boolean {
+    const device = this.devices.get(deviceId);
+    if (device) {
+      const oldStatus = device.status;
+      device.status = status;
+      device.lastSeen = new Date();
+
+      if (oldStatus !== status) {
+        this.emit('deviceStatusChanged', deviceId, status);
+        logger.debug('Device status updated', {
+          deviceId,
+          oldStatus,
+          newStatus: status,
+        });
+      }
+
+      return true;
+    }
+    return false;
+  }
+
+  /**
    * Destroy the registry and clean up resources
    */
   public async destroy(): Promise<void> {

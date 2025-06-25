@@ -798,7 +798,9 @@ export class FileSyncService {
     const error = new Error(message) as SyncError;
     error.code = code;
     error.retryable = this.isRetryableError(code);
-    error.details = details;
+    if (details) {
+      error.details = details;
+    }
     return error;
   }
 

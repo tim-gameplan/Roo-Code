@@ -10,7 +10,7 @@ import { EventEmitter } from 'events';
 import { IncomingMessage } from 'http';
 import { logger } from '@/utils/logger';
 import {
-  DeviceInfo,
+  DeviceInfo as RCCSDeviceInfo,
   Session,
   CloudMessage,
   ConnectionInfo,
@@ -25,10 +25,31 @@ import {
   CloudMessageType,
   MessagePriority,
 } from '@/types/rccs';
+import { DeviceInfo as MobileDeviceInfo } from '@/types/mobile';
 import { MessageRouter } from './message-router';
 import { SessionManager } from './session-manager';
 import { DeviceRegistry } from './device-registry';
 import { HealthMonitor } from './health-monitor';
+
+/**
+ * Convert RCCS DeviceInfo to Mobile DeviceInfo format
+ */
+function convertToMobileDeviceInfo(rccsDevice: RCCSDeviceInfo): MobileDeviceInfo {
+  return {
+    deviceId: rccsDevice.id,
+    userId: rccsDevice.userId,
+    deviceType: rccsDevice.type as 'mobile' | 'desktop' | 'tablet',
+    platform: rccsDevice.platform,
+    version: rccsDevice.version,
+    capabilities: {
+      compression: ['gzip'],
+      maxMessageSize: rccsDevice.capabilities.maxFileSize,
+      supportsBatching: rccsDevice.capabilities.supportsFileSync,
+      supportsOfflineQueue: true,
+      batteryOptimized: rccsDevice.type === 'mobile',
+    },
+  };
+}
 
 /**
  * Main RCCS WebSocket Server class
@@ -52,8 +73,26 @@ export class RCCSWebSocketServer extends EventEmitter {
     // Initialize core services
     this.messageRouter = new MessageRouter(this);
     this.sessionManager = new SessionManager(config);
-    this.deviceRegistry = new DeviceRegistry(config);
-    this.healthMonitor = new HealthMonitor(this, config);
+    this.deviceRegistry = new DeviceRegistry({
+      maxDevices: config.maxConnections || 1000,
+      inactiveTimeout: config.sessionTimeout || 300000,
+      cleanupInterval: 60000,
+      persistToDisk: false,
+    });
+    this.healthMonitor = new HealthMonitor({
+      checkInterval: 30000,
+      timeout: 5000,
+      retryAttempts: 3,
+      retryDelay: 1000,
+      alertThresholds: {
+        cpu: 80,
+        memory: 85,
+        disk: 90,
+        responseTime: 5000,
+      },
+      enableMetrics: true,
+      enableAlerts: true,
+    });
 
     // Create WebSocket server
     this.wss = new WebSocketServer({
@@ -221,10 +260,13 @@ export class RCCSWebSocketServer extends EventEmitter {
     message: CloudMessage
   ): Promise<void> {
     try {
-      const deviceInfo = message.payload as DeviceInfo;
+      const deviceInfo = message.payload as RCCSDeviceInfo;
+
+      // Convert RCCS DeviceInfo to Mobile DeviceInfo for registry
+      const mobileDeviceInfo = convertToMobileDeviceInfo(deviceInfo);
 
       // Validate device registration
-      const isValid = await this.deviceRegistry.validateDeviceRegistration(deviceInfo);
+      const isValid = await this.deviceRegistry.validateDeviceRegistration(mobileDeviceInfo);
       if (!isValid) {
         throw new AuthenticationError('Invalid device registration');
       }
@@ -239,7 +281,7 @@ export class RCCSWebSocketServer extends EventEmitter {
       connectionInfo.userId = deviceInfo.userId;
 
       // Register device
-      await this.deviceRegistry.registerDevice(deviceInfo);
+      await this.deviceRegistry.registerDevice(mobileDeviceInfo);
 
       // Send registration success response
       const response: CloudMessage = {
@@ -435,12 +477,12 @@ export class RCCSWebSocketServer extends EventEmitter {
   /**
    * Extract device info from connection request
    */
-  private async extractDeviceInfoFromRequest(request: IncomingMessage): Promise<DeviceInfo> {
+  private async extractDeviceInfoFromRequest(request: IncomingMessage): Promise<RCCSDeviceInfo> {
     // Extract from headers or query parameters
     const url = new URL(request.url || '', `http://${request.headers.host}`);
     const deviceId = url.searchParams.get('deviceId') || this.generateDeviceId();
     const userId = url.searchParams.get('userId') || 'anonymous';
-    const deviceType = (url.searchParams.get('deviceType') as DeviceInfo['type']) || 'mobile';
+    const deviceType = (url.searchParams.get('deviceType') as RCCSDeviceInfo['type']) || 'mobile';
     const platform = url.searchParams.get('platform') || 'unknown';
     const version = url.searchParams.get('version') || '1.0.0';
 
@@ -468,7 +510,7 @@ export class RCCSWebSocketServer extends EventEmitter {
    */
   private async initiateAuthentication(
     connectionInfo: ConnectionInfo,
-    deviceInfo: DeviceInfo
+    deviceInfo: RCCSDeviceInfo
   ): Promise<void> {
     // Send authentication challenge
     const authChallenge: CloudMessage = {
