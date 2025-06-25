@@ -300,14 +300,21 @@ export enum EventType {
   PRESENCE_ONLINE = 'presence.online',
   PRESENCE_OFFLINE = 'presence.offline',
   PRESENCE_AWAY = 'presence.away',
+  PRESENCE_UPDATED = 'presence.updated',
   PRESENCE_DEVICE_CONNECTED = 'presence.device_connected',
   PRESENCE_DEVICE_DISCONNECTED = 'presence.device_disconnected',
 
   // Messaging events
   MESSAGE_SENT = 'message.sent',
+  MESSAGE_CREATED = 'message.created',
   MESSAGE_DELIVERED = 'message.delivered',
   MESSAGE_READ = 'message.read',
   MESSAGE_TYPING_INDICATOR = 'message.typing_indicator',
+
+  // Sync events
+  SYNC_STARTED = 'sync.started',
+  SYNC_COMPLETED = 'sync.completed',
+  SYNC_FAILED = 'sync.failed',
 
   // System events
   SYSTEM_HEALTH_CHECK = 'system.health_check',
@@ -322,6 +329,7 @@ export enum EventPriority {
   CRITICAL = 'critical',
   HIGH = 'high',
   NORMAL = 'normal',
+  MEDIUM = 'medium',
   LOW = 'low',
   BACKGROUND = 'background',
 }

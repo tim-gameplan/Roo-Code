@@ -21,37 +21,29 @@
  */
 
 import { EventEmitter } from 'events';
-import { Pool, PoolClient } from 'pg';
+import { Pool } from 'pg';
 import { createHash } from 'crypto';
-import { pipeline } from 'stream/promises';
-import { createReadStream, createWriteStream, promises as fs } from 'fs';
-import { join, extname, basename } from 'path';
+import { createReadStream, promises as fs } from 'fs';
+import { join } from 'path';
 import { logger } from '../utils/logger';
 import { EventBroadcastingService } from './event-broadcaster';
 import {
   FileMetadata,
   FileUploadRequest,
   FileUploadResponse,
-  FileDownloadRequest,
   FileDownloadResponse,
-  FileChunk,
   FileUploadProgress,
-  FileThumbnail,
-  FilePermission,
-  FileShareLink,
   FileSearchQuery,
   FileSearchResult,
   FileValidationResult,
   FileStorageConfig,
   FileEvent,
-  FileWebSocketEvents,
   FileError,
   FileNotFoundError,
   FilePermissionError,
   FileSizeError,
   FileTypeError,
   FileVirusError,
-  FileStorageError,
 } from '../types/file';
 
 /**
@@ -66,9 +58,9 @@ interface FileUploadSession {
   totalChunks: number;
   uploadedChunks: Set<number>;
   userId: string;
-  deviceId?: string;
-  conversationId?: string;
-  workspaceId?: string;
+  deviceId: string | undefined;
+  conversationId: string | undefined;
+  workspaceId: string | undefined;
   createdAt: Date;
   lastActivity: Date;
   tempPath: string;
@@ -302,8 +294,8 @@ export class FileManagementService extends EventEmitter {
           size: request.size,
           mimeType: request.mimeType,
         },
-        conversationId: request.conversationId,
-        workspaceId: request.workspaceId,
+        ...(request.conversationId && { conversationId: request.conversationId }),
+        ...(request.workspaceId && { workspaceId: request.workspaceId }),
       });
 
       logger.info('File upload session started', {
@@ -451,11 +443,11 @@ export class FileManagementService extends EventEmitter {
 
       // Generate thumbnail if applicable
       let thumbnailId: string | undefined;
-      if (this.config.thumbnailGeneration && this.isImageFile(session.metadata.mimeType)) {
+      if (this.config.thumbnailGeneration && this.isImageFile(session.metadata['mimeType'])) {
         thumbnailId = await this.generateThumbnail(
           session.fileId,
           finalPath,
-          session.metadata.mimeType
+          session.metadata['mimeType']
         );
       }
 
@@ -473,11 +465,11 @@ export class FileManagementService extends EventEmitter {
         fileId: session.fileId,
         filename: session.filename,
         size: session.totalSize,
-        mimeType: session.metadata.mimeType,
+        mimeType: session.metadata['mimeType'],
         downloadUrl: `/api/files/${session.fileId}/download`,
         checksum,
         uploadedAt: new Date(),
-        expiresAt: session.metadata.expiresAt,
+        expiresAt: session.metadata['expiresAt'],
       };
 
       // Broadcast upload completed event
@@ -487,8 +479,8 @@ export class FileManagementService extends EventEmitter {
         userId: session.userId,
         timestamp: new Date(),
         data: response,
-        conversationId: session.conversationId,
-        workspaceId: session.workspaceId,
+        ...(session.conversationId && { conversationId: session.conversationId }),
+        ...(session.workspaceId && { workspaceId: session.workspaceId }),
       });
 
       logger.info('File upload completed', {
@@ -567,7 +559,7 @@ export class FileManagementService extends EventEmitter {
         stream: stream as any,
         metadata,
         contentLength: range ? range.end - range.start + 1 : stats.size,
-        contentRange: range ? `bytes ${range.start}-${range.end}/${stats.size}` : undefined,
+        ...(range && { contentRange: `bytes ${range.start}-${range.end}/${stats.size}` }),
         etag: metadata.checksum,
         lastModified: metadata.uploadedAt,
       };
@@ -661,9 +653,9 @@ export class FileManagementService extends EventEmitter {
         sql += ` LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
         params.push(limit, offset);
 
-        const result = await client.query(sql, params);
+        const queryResult = await client.query(sql, params);
 
-        const files: FileMetadata[] = result.rows.map((row) => ({
+        const files: FileMetadata[] = queryResult.rows.map((row) => ({
           id: row.id,
           filename: row.filename,
           originalName: row.original_name,
@@ -682,15 +674,20 @@ export class FileManagementService extends EventEmitter {
           description: row.description,
         }));
 
-        const total = result.rows.length > 0 ? parseInt(result.rows[0].total_count) : 0;
+        const total = queryResult.rows.length > 0 ? parseInt(queryResult.rows[0].total_count) : 0;
         const hasMore = offset + limit < total;
 
-        return {
+        const searchResult: FileSearchResult = {
           files,
           total,
           hasMore,
-          nextOffset: hasMore ? offset + limit : undefined,
         };
+
+        if (hasMore) {
+          searchResult.nextOffset = offset + limit;
+        }
+
+        return searchResult;
       } finally {
         client.release();
       }
