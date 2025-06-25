@@ -882,3 +882,105 @@ export const PERFORMANCE_THRESHOLDS = {
   HEALTH_CHECK_INTERVAL_MS: 30000, // 30 seconds
   METRICS_COLLECTION_INTERVAL_MS: 60000, // 1 minute
 } as const;
+
+// ============================================================================
+// INTEGRATION TYPES (for TASK-008.1.4.2)
+// ============================================================================
+
+export interface ScheduleWorkflowStatus {
+  scheduleId: string;
+  workflowId: string;
+  scheduleStatus: ScheduleStatus;
+  workflowStatus: WorkflowStatus;
+  lastExecution?: ScheduledExecution;
+  nextExecution?: Date;
+  integrationHealth: IntegrationHealth;
+  metrics: ScheduleWorkflowMetrics;
+}
+
+export interface WorkflowStatus {
+  id: string;
+  name: string;
+  version: string;
+  status: 'active' | 'inactive' | 'deprecated';
+  lastModified: Date;
+  executionCount: number;
+  averageExecutionTime: number;
+}
+
+export interface IntegrationHealth {
+  status: 'healthy' | 'warning' | 'critical';
+  lastSync: Date;
+  syncLatency: number;
+  eventDeliveryRate: number;
+  issues: IntegrationIssue[];
+}
+
+export interface IntegrationIssue {
+  type: 'sync_delay' | 'event_loss' | 'state_mismatch' | 'execution_failure';
+  severity: 'low' | 'medium' | 'high';
+  message: string;
+  timestamp: Date;
+  resolved: boolean;
+}
+
+export interface ScheduleWorkflowMetrics {
+  totalIntegrations: number;
+  successfulExecutions: number;
+  failedExecutions: number;
+  averageIntegrationLatency: number;
+  averageStateSyncLatency: number;
+  averageEventBroadcastLatency: number;
+  lastUpdated: Date;
+}
+
+export interface ScheduleTriggeredEvent {
+  id: string;
+  scheduleId: string;
+  workflowId: string;
+  triggerTime: Date;
+  triggerType: 'scheduled' | 'manual' | 'retry';
+  context: ExecutionContext;
+  metadata: Record<string, any>;
+}
+
+export interface WorkflowCompletedEvent {
+  id: string;
+  executionId: string;
+  scheduleId: string;
+  workflowId: string;
+  status: ExecutionStatus;
+  startTime: Date;
+  endTime: Date;
+  duration: number;
+  result?: any;
+  error?: ExecutionError;
+  metadata: Record<string, any>;
+}
+
+export interface ScheduleTrigger {
+  scheduleId: string;
+  workflowId: string;
+  triggerTime: Date;
+  triggerType: 'scheduled' | 'manual' | 'retry' | 'event';
+  context: {
+    triggeredBy: string;
+    metadata: Record<string, any>;
+  };
+}
+
+export interface WorkflowExecutionSummary {
+  executionId: string;
+  workflowId: string;
+  scheduleId?: string;
+  status: ExecutionStatus;
+  startTime: Date;
+  endTime?: Date;
+  duration?: number;
+  stepCount: number;
+  completedSteps: number;
+  failedSteps: number;
+  result?: any;
+  error?: ExecutionError;
+  metrics: ExecutionMetrics;
+}
