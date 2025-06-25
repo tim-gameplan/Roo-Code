@@ -12,7 +12,9 @@ import {
   FileSyncState,
   FileSyncMetadata,
   SyncOperation,
+  SyncOperationData,
   OfflineOperation,
+  OfflineOperationData,
   CreateWorkspaceRequest,
   UpdateWorkspaceRequest,
   WorkspaceListRequest,
@@ -38,6 +40,7 @@ import {
   SyncErrorCode,
   SyncProgress,
   DeviceSyncInfo,
+  ConflictData,
   isSyncStatus,
   isConflictResolution,
   isOperationType,
@@ -397,11 +400,16 @@ export class FileSyncService {
         hasConflicts: conflicts.length > 0,
       });
 
-      return {
+      const response: SyncFileResponse = {
         syncState,
-        conflicts: conflicts.length > 0 ? conflicts : undefined,
         requiresResolution,
       };
+
+      if (conflicts.length > 0) {
+        response.conflicts = conflicts as ConflictData[];
+      }
+
+      return response;
     } catch (error) {
       await client.query('ROLLBACK');
       logger.error('Failed to sync file', { error, userId, request });
@@ -457,19 +465,19 @@ export class FileSyncService {
 
     if (filePaths && filePaths.length > 0) {
       countQuery += ` AND file_path = ANY($${countParamIndex})`;
-      countParams.push(filePaths);
+      countParams.push(filePaths as any);
       countParamIndex++;
     }
 
     if (syncStatus && syncStatus.length > 0) {
       countQuery += ` AND sync_status = ANY($${countParamIndex})`;
-      countParams.push(syncStatus);
+      countParams.push(syncStatus as any);
       countParamIndex++;
     }
 
     if (since) {
       countQuery += ` AND updated_at >= $${countParamIndex}`;
-      countParams.push(since);
+      countParams.push(since as any);
     }
 
     const countResult = await this.db.query(countQuery, countParams);
@@ -647,25 +655,25 @@ export class FileSyncService {
 
     if (status && status.length > 0) {
       countQuery += ` AND status = ANY($${countParamIndex})`;
-      countParams.push(status);
+      countParams.push(status as any);
       countParamIndex++;
     }
 
     if (operationType && operationType.length > 0) {
       countQuery += ` AND operation_type = ANY($${countParamIndex})`;
-      countParams.push(operationType);
+      countParams.push(operationType as any);
       countParamIndex++;
     }
 
     if (resourceType && resourceType.length > 0) {
       countQuery += ` AND resource_type = ANY($${countParamIndex})`;
-      countParams.push(resourceType);
+      countParams.push(resourceType as any);
       countParamIndex++;
     }
 
     if (since) {
       countQuery += ` AND created_at >= $${countParamIndex}`;
-      countParams.push(since);
+      countParams.push(since as any);
     }
 
     const countResult = await this.db.query(countQuery, countParams);
@@ -758,7 +766,7 @@ export class FileSyncService {
 
     if (status && status.length > 0) {
       countQuery += ` AND status = ANY($${countParamIndex})`;
-      countParams.push(status);
+      countParams.push(status as any);
       countParamIndex++;
     }
 
@@ -838,41 +846,51 @@ export class FileSyncService {
       lastModified: new Date(row.last_modified),
       syncStatus: row.sync_status as SyncStatus,
       conflictResolution: row.conflict_resolution as ConflictResolution,
-      metadata: row.metadata || {},
+      metadata: (row.metadata || {}) as FileSyncMetadata,
       createdAt: new Date(row.created_at),
       updatedAt: new Date(row.updated_at),
     };
   }
 
   private mapSyncOperationFromDb(row: any): SyncOperation {
-    return {
+    const operation: SyncOperation = {
       id: row.id,
       userId: row.user_id,
       deviceId: row.device_id,
       operationType: row.operation_type as OperationType,
       resourceType: row.resource_type as ResourceType,
       resourceId: row.resource_id,
-      operationData: row.operation_data || {},
+      operationData: row.operation_data || ({} as SyncOperationData),
       status: row.status as OperationStatus,
       conflictData: row.conflict_data,
       createdAt: new Date(row.created_at),
-      completedAt: row.completed_at ? new Date(row.completed_at) : undefined,
     };
+
+    if (row.completed_at) {
+      operation.completedAt = new Date(row.completed_at);
+    }
+
+    return operation;
   }
 
   private mapOfflineOperationFromDb(row: any): OfflineOperation {
-    return {
+    const operation: OfflineOperation = {
       id: row.id,
       userId: row.user_id,
       deviceId: row.device_id,
       operationType: row.operation_type as OperationType,
-      operationData: row.operation_data || {},
+      operationData: row.operation_data || ({} as OfflineOperationData),
       createdAt: new Date(row.created_at),
       retryCount: row.retry_count,
       maxRetries: row.max_retries,
       status: row.status as OperationStatus,
       errorMessage: row.error_message,
-      nextRetryAt: row.next_retry_at ? new Date(row.next_retry_at) : undefined,
     };
+
+    if (row.next_retry_at) {
+      operation.nextRetryAt = new Date(row.next_retry_at);
+    }
+
+    return operation;
   }
 }
