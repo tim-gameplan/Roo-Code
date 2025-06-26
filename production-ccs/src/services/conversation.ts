@@ -56,7 +56,7 @@ export class ConversationService {
     try {
       await client.query('BEGIN');
 
-      const conversationId = await this.generateUUID();
+      const conversationId = await this.generateUUID(client);
       const now = new Date();
 
       const metadata = {
@@ -378,7 +378,7 @@ export class ConversationService {
         });
       }
 
-      const messageId = await this.generateUUID();
+      const messageId = await this.generateUUID(client);
       const now = new Date();
 
       const metadata = {
@@ -807,13 +807,18 @@ export class ConversationService {
   // UTILITY METHODS
   // =====================================================
 
-  private async generateUUID(): Promise<string> {
-    const client = await this.pool.connect();
-    try {
+  private async generateUUID(client?: PoolClient): Promise<string> {
+    if (client) {
       const result = await client.query('SELECT gen_random_uuid() as id');
       return result.rows[0].id;
+    }
+
+    const poolClient = await this.pool.connect();
+    try {
+      const result = await poolClient.query('SELECT gen_random_uuid() as id');
+      return result.rows[0].id;
     } finally {
-      client.release();
+      poolClient.release();
     }
   }
 
@@ -875,7 +880,7 @@ export class ConversationService {
     userId: string,
     deviceId?: string
   ): Promise<MessageChange> {
-    const changeId = await this.generateUUID();
+    const changeId = await this.generateUUID(client);
     const now = new Date();
 
     const result = await client.query(
