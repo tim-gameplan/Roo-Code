@@ -39,25 +39,31 @@ export class TestWebSocketClient extends EventEmitter {
 
   async connect(): Promise<void> {
     return new Promise((resolve, reject) => {
+      let isResolved = false;
+
       try {
         this.ws = new WebSocket(this.config.url, this.config.protocols, {
           headers: this.config.headers,
         });
 
         const timeout = setTimeout(() => {
-          if (this.ws && this.ws.readyState !== WebSocket.OPEN) {
+          if (!isResolved && this.ws && this.ws.readyState !== WebSocket.OPEN) {
+            isResolved = true;
             this.ws.terminate();
             reject(new Error('WebSocket connection timeout'));
           }
         }, this.config.timeout);
 
         this.ws.on('open', () => {
-          clearTimeout(timeout);
-          this.isConnected = true;
-          this.reconnectCount = 0;
-          logger.info(`WebSocket client connected to ${this.config.url}`);
-          this.emit('connected');
-          resolve();
+          if (!isResolved) {
+            isResolved = true;
+            clearTimeout(timeout);
+            this.isConnected = true;
+            this.reconnectCount = 0;
+            logger.info(`WebSocket client connected to ${this.config.url}`);
+            this.emit('connected');
+            resolve();
+          }
         });
 
         this.ws.on('message', (data) => {
@@ -73,7 +79,10 @@ export class TestWebSocketClient extends EventEmitter {
         });
 
         this.ws.on('close', (code, reason) => {
-          clearTimeout(timeout);
+          if (!isResolved) {
+            isResolved = true;
+            clearTimeout(timeout);
+          }
           this.isConnected = false;
           logger.info(`WebSocket connection closed: ${code} - ${reason}`);
           this.emit('disconnected', { code, reason });
@@ -84,13 +93,25 @@ export class TestWebSocketClient extends EventEmitter {
         });
 
         this.ws.on('error', (error) => {
-          clearTimeout(timeout);
-          logger.error('WebSocket error:', error);
-          this.emit('error', error);
-          reject(error);
+          if (!isResolved) {
+            isResolved = true;
+            clearTimeout(timeout);
+            logger.error('WebSocket error:', error);
+            this.emit('error', error);
+            reject(error);
+          } else {
+            logger.error('WebSocket error:', error);
+            // Only emit error if there are listeners to prevent unhandled errors
+            if (this.listenerCount('error') > 0) {
+              this.emit('error', error);
+            }
+          }
         });
       } catch (error) {
-        reject(error);
+        if (!isResolved) {
+          isResolved = true;
+          reject(error);
+        }
       }
     });
   }
@@ -106,6 +127,7 @@ export class TestWebSocketClient extends EventEmitter {
         await this.connect();
       } catch (error) {
         logger.error('Reconnection failed:', error);
+        // Don't emit error during reconnection attempts to prevent unhandled errors
       }
     }, this.config.reconnectDelay);
   }

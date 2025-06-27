@@ -125,22 +125,23 @@ describe('Database-WebSocket Integration Tests', () => {
 
   describe('Error Handling', () => {
     it('should handle connection errors gracefully', async () => {
-      // Create client with invalid URL
+      // Create client with invalid URL and very short timeout
       const invalidClient = new TestWebSocketClient({
-        url: 'ws://invalid-host:9999',
+        url: 'ws://127.0.0.1:9999', // Use IP instead of hostname to avoid DNS lookup
+        timeout: 1000, // 1 second timeout
+        reconnectAttempts: 0, // Disable reconnection for this test
       });
 
-      // Attempt to connect should fail
+      // Attempt to connect should fail with proper error handling
+      await expect(invalidClient.connect()).rejects.toThrow();
+
+      // Ensure cleanup
       try {
-        await invalidClient.connect();
-        // If we reach here, the connection unexpectedly succeeded
         invalidClient.terminate();
-        fail('Expected connection to fail');
-      } catch (error) {
-        // Connection failure is expected
-        expect(error).toBeDefined();
+      } catch (e) {
+        // Ignore cleanup errors for invalid connections
       }
-    });
+    }, 3000); // 3 second timeout for this test
 
     it('should handle message timeout', async () => {
       // Wait for a message that will never come
@@ -269,8 +270,28 @@ describe('Database-WebSocket Integration Tests', () => {
     });
 
     it('should send user message CloudMessage', async () => {
-      // Send user message
-      wsClient.sendCloudMessage({
+      // Ensure connection is fully established and stable
+      await new Promise((resolve) => setTimeout(resolve, 200));
+
+      // Verify connection is open before sending
+      expect(wsClient.isConnectionOpen()).toBe(true);
+
+      // Create a fresh client to avoid any race conditions
+      const freshClient = await wsManager.createClient('fresh-test-client', {
+        url: 'ws://localhost:3001',
+        headers: {
+          Authorization: 'Bearer test-token',
+        },
+      });
+
+      // Wait for fresh connection to be established
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      // Verify fresh connection is open
+      expect(freshClient.isConnectionOpen()).toBe(true);
+
+      // Send user message with the fresh client
+      freshClient.sendCloudMessage({
         type: CloudMessageType.USER_MESSAGE,
         fromDeviceId: 'test-device-001',
         toDeviceId: 'test-device-002',
@@ -283,11 +304,23 @@ describe('Database-WebSocket Integration Tests', () => {
         requiresAck: true,
       });
 
-      // Verify connection remains stable
-      expect(wsClient.isConnectionOpen()).toBe(true);
+      // Small delay to allow message processing
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      // Verify connection remains stable after sending
+      expect(freshClient.isConnectionOpen()).toBe(true);
+
+      // Cleanup fresh client
+      freshClient.disconnect();
     });
 
     it('should handle CloudMessage with file sync payload', async () => {
+      // Ensure connection is fully established
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      // Verify connection is open before sending
+      expect(wsClient.isConnectionOpen()).toBe(true);
+
       // Send file sync message
       wsClient.sendCloudMessage({
         type: CloudMessageType.FILE_SYNC,
@@ -303,6 +336,9 @@ describe('Database-WebSocket Integration Tests', () => {
         },
         priority: MessagePriority.NORMAL,
       });
+
+      // Small delay to allow message processing
+      await new Promise((resolve) => setTimeout(resolve, 50));
 
       // Verify connection remains stable
       expect(wsClient.isConnectionOpen()).toBe(true);

@@ -224,7 +224,39 @@ export class RCCSWebSocketServer extends EventEmitter {
 
       // Require authentication for all other messages
       if (!connectionInfo.isAuthenticated) {
-        throw new AuthenticationError('Connection not authenticated');
+        logger.warn('Unauthenticated message received', {
+          connectionId: connectionInfo.id,
+          deviceId: connectionInfo.deviceId,
+          messageType: message.type,
+        });
+
+        // Send authentication required response instead of throwing
+        const authRequiredResponse: CloudMessage = {
+          id: this.generateMessageId(),
+          type: CloudMessageType.ERROR,
+          fromDeviceId: 'server',
+          toDeviceId: connectionInfo.deviceId,
+          userId: connectionInfo.userId,
+          payload: {
+            error: 'Authentication required',
+            message: 'Please authenticate before sending messages',
+          },
+          timestamp: new Date(),
+          priority: MessagePriority.HIGH,
+          requiresAck: false,
+        };
+
+        try {
+          await this.sendMessage(connectionInfo, authRequiredResponse);
+        } catch (error) {
+          // If we can't send the auth required response, just log it
+          logger.debug('Failed to send auth required response', {
+            connectionId: connectionInfo.id,
+            deviceId: connectionInfo.deviceId,
+            error: error instanceof Error ? error.message : String(error),
+          });
+        }
+        return;
       }
 
       // Route message
@@ -300,7 +332,16 @@ export class RCCSWebSocketServer extends EventEmitter {
         requiresAck: false,
       };
 
-      await this.sendMessage(connectionInfo, response);
+      try {
+        await this.sendMessage(connectionInfo, response);
+      } catch (error) {
+        // If we can't send the success response, log it but don't fail registration
+        logger.warn('Failed to send registration success response', {
+          connectionId: connectionInfo.id,
+          deviceId: deviceInfo.id,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
 
       logger.info('Device registered successfully', {
         connectionId: connectionInfo.id,
@@ -418,12 +459,23 @@ export class RCCSWebSocketServer extends EventEmitter {
    */
   public async sendMessage(connectionInfo: ConnectionInfo, message: CloudMessage): Promise<void> {
     try {
-      if (connectionInfo.socket.readyState !== WebSocket.OPEN) {
+      // Double-check connection state to prevent race conditions
+      if (!connectionInfo.socket || connectionInfo.socket.readyState !== WebSocket.OPEN) {
         throw new MessageDeliveryError(message.id, 'Connection not open');
       }
 
       const messageStr = JSON.stringify(message);
-      connectionInfo.socket.send(messageStr);
+
+      // Use a try-catch around the actual send to handle immediate failures
+      try {
+        connectionInfo.socket.send(messageStr);
+      } catch (sendError) {
+        // If send fails, the connection is likely closed
+        throw new MessageDeliveryError(
+          message.id,
+          `Send failed: ${sendError instanceof Error ? sendError.message : 'Unknown error'}`
+        );
+      }
 
       logger.debug('Message sent to device', {
         connectionId: connectionInfo.id,
