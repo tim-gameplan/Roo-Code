@@ -24,7 +24,14 @@ import {
   RoutingStrategy,
   ConnectionQuality,
 } from '../types/device-relay';
-import { DeviceInfo, Session, CloudMessage, MessagePriority, RCCSEvents } from '../types/rccs';
+import {
+  DeviceInfo,
+  Session,
+  CloudMessage,
+  CloudMessageType,
+  MessagePriority,
+  RCCSEvents,
+} from '../types/rccs';
 import { DeviceDiscoveryService } from './device-discovery';
 import { DeviceHandoffService } from './device-handoff';
 import { CapabilityNegotiationService } from './capability-negotiation';
@@ -38,7 +45,20 @@ export class DeviceRelayService extends EventEmitter {
   private deviceNodes: Map<string, DeviceNode> = new Map();
   private activeHandoffs: Map<string, HandoffRequest> = new Map();
   private performanceCache: Map<string, DevicePerformance> = new Map();
-  private metrics: DeviceRelayMetrics;
+  private metrics: DeviceRelayMetrics = {
+    totalDevices: 0,
+    activeDevices: 0,
+    discoveryRequests: 0,
+    successfulDiscoveries: 0,
+    handoffRequests: 0,
+    successfulHandoffs: 0,
+    averageHandoffTime: 0,
+    capabilityNegotiations: 0,
+    routedMessages: 0,
+    failedRoutes: 0,
+    averageLatency: 0,
+    lastUpdated: new Date(),
+  };
   private isRunning = false;
   private monitoringInterval?: NodeJS.Timeout;
 
@@ -67,8 +87,9 @@ export class DeviceRelayService extends EventEmitter {
 
       this.emit('relay:initialized');
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       throw new DeviceRelayError(
-        `Failed to initialize device relay service: ${error.message}`,
+        `Failed to initialize device relay service: ${errorMessage}`,
         'INITIALIZATION_FAILED'
       );
     }
@@ -126,8 +147,9 @@ export class DeviceRelayService extends EventEmitter {
 
       this.emit('device:registered', deviceInfo, deviceNode);
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       throw new DeviceRelayError(
-        `Failed to register device ${deviceInfo.id}: ${error.message}`,
+        `Failed to register device ${deviceInfo.id}: ${errorMessage}`,
         'DEVICE_REGISTRATION_FAILED',
         deviceInfo.id
       );
@@ -169,8 +191,9 @@ export class DeviceRelayService extends EventEmitter {
 
       this.emit('device:unregistered', deviceId);
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       throw new DeviceRelayError(
-        `Failed to unregister device ${deviceId}: ${error.message}`,
+        `Failed to unregister device ${deviceId}: ${errorMessage}`,
         'DEVICE_UNREGISTRATION_FAILED',
         deviceId
       );
@@ -193,8 +216,9 @@ export class DeviceRelayService extends EventEmitter {
       this.updateMetrics();
       return result;
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       throw new DeviceRelayError(
-        `Device discovery failed: ${error.message}`,
+        `Device discovery failed: ${errorMessage}`,
         'DISCOVERY_FAILED',
         request.requestingDeviceId
       );
@@ -227,8 +251,9 @@ export class DeviceRelayService extends EventEmitter {
       this.activeHandoffs.delete(request.id);
       this.emit('handoff:failed', request, error);
 
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       throw new DeviceRelayError(
-        `Handoff failed: ${error.message}`,
+        `Handoff failed: ${errorMessage}`,
         'HANDOFF_FAILED',
         request.fromDeviceId
       );
@@ -249,8 +274,9 @@ export class DeviceRelayService extends EventEmitter {
 
       return result;
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       throw new DeviceRelayError(
-        `Capability negotiation failed: ${error.message}`,
+        `Capability negotiation failed: ${errorMessage}`,
         'CAPABILITY_NEGOTIATION_FAILED'
       );
     }
@@ -281,7 +307,8 @@ export class DeviceRelayService extends EventEmitter {
 
       this.emit('relay:message:failed', message, error);
 
-      throw new DeviceRelayError(`Message routing failed: ${error.message}`, 'ROUTING_FAILED');
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      throw new DeviceRelayError(`Message routing failed: ${errorMessage}`, 'ROUTING_FAILED');
     }
   }
 
@@ -309,8 +336,9 @@ export class DeviceRelayService extends EventEmitter {
 
       this.emit('performance:updated', deviceId, performance);
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       throw new DeviceRelayError(
-        `Failed to update device performance: ${error.message}`,
+        `Failed to update device performance: ${errorMessage}`,
         'PERFORMANCE_UPDATE_FAILED',
         deviceId
       );
@@ -487,60 +515,57 @@ export class DeviceRelayService extends EventEmitter {
       bestDevice.role = DeviceRole.PRIMARY;
       topology.primaryDevice = bestDevice.deviceInfo.id;
     } else {
-      topology.primaryDevice = undefined;
+      delete topology.primaryDevice;
     }
   }
 
   private async broadcastTopologyUpdate(topology: DeviceTopology): Promise<void> {
-    // Implementation for broadcasting topology updates to all devices in the topology
-    const message: DeviceRelayMessage = {
-      id: `topology-${topology.userId}-${Date.now()}`,
-      type: RelayMessageType.TOPOLOGY_UPDATE,
-      fromDeviceId: 'system',
-      userId: topology.userId,
-      payload: {
-        topology: {
-          userId: topology.userId,
-          devices: Array.from(topology.devices.entries()).map(([id, node]) => ({
-            id,
-            deviceInfo: node.deviceInfo,
-            role: node.role,
-            priority: node.priority,
-            isReachable: node.isReachable,
-            lastActivity: node.lastActivity,
-          })),
-          primaryDevice: topology.primaryDevice,
-          version: topology.version,
-          lastUpdated: topology.lastUpdated,
-        },
-      },
-      timestamp: new Date(),
-      priority: MessagePriority.NORMAL,
-      requiresAck: false,
-      relayType: RelayMessageType.TOPOLOGY_UPDATE,
-      routingInfo: {
-        routingStrategy: RoutingStrategy.DIRECT,
-        maxHops: 1,
-        ttl: 30000,
-      },
-      deliveryOptions: {
-        requiresAck: false,
-        timeout: 5000,
-        retryCount: 2,
-        retryDelay: 1000,
-        fallbackToAny: false,
-        preserveOrder: false,
-      },
-    };
-
     // Broadcast to all devices in the topology
     for (const deviceNode of topology.devices.values()) {
       if (deviceNode.isReachable) {
         try {
-          await this.routeMessage({
-            ...message,
+          const message: DeviceRelayMessage = {
+            id: `topology-${topology.userId}-${deviceNode.deviceInfo.id}-${Date.now()}`,
+            type: CloudMessageType.DEVICE_STATUS,
+            fromDeviceId: 'system',
             toDeviceId: deviceNode.deviceInfo.id,
-          });
+            userId: topology.userId,
+            payload: {
+              topology: {
+                userId: topology.userId,
+                devices: Array.from(topology.devices.entries()).map(([id, node]) => ({
+                  id,
+                  deviceInfo: node.deviceInfo,
+                  role: node.role,
+                  priority: node.priority,
+                  isReachable: node.isReachable,
+                  lastActivity: node.lastActivity,
+                })),
+                primaryDevice: topology.primaryDevice,
+                version: topology.version,
+                lastUpdated: topology.lastUpdated,
+              },
+            },
+            timestamp: new Date(),
+            priority: MessagePriority.NORMAL,
+            requiresAck: false,
+            relayType: RelayMessageType.TOPOLOGY_UPDATE,
+            routingInfo: {
+              routingStrategy: RoutingStrategy.DIRECT,
+              maxHops: 1,
+              ttl: 30000,
+            },
+            deliveryOptions: {
+              requiresAck: false,
+              timeout: 5000,
+              retryCount: 2,
+              retryDelay: 1000,
+              fallbackToAny: false,
+              preserveOrder: false,
+            },
+          };
+
+          await this.routeMessage(message);
         } catch (error) {
           // Log error but continue with other devices
           console.error(
@@ -672,8 +697,8 @@ export class DeviceRelayService extends EventEmitter {
     }
 
     // Direct routing
-    if (strategy === RoutingStrategy.DIRECT && toDevice) {
-      return [message.fromDeviceId, message.toDeviceId!];
+    if (strategy === RoutingStrategy.DIRECT && toDevice && message.toDeviceId) {
+      return [message.fromDeviceId, message.toDeviceId];
     }
 
     // Get user topology for intelligent routing
@@ -699,10 +724,11 @@ export class DeviceRelayService extends EventEmitter {
         return this.calculateRedundantPath(message, topology);
 
       default:
-        return [
-          message.fromDeviceId,
-          message.toDeviceId || topology.primaryDevice || message.fromDeviceId,
-        ];
+        const fallbackDevice = message.toDeviceId || topology.primaryDevice;
+        if (fallbackDevice) {
+          return [message.fromDeviceId, fallbackDevice];
+        }
+        return [message.fromDeviceId];
     }
   }
 
@@ -730,7 +756,10 @@ export class DeviceRelayService extends EventEmitter {
     }
 
     const primaryDevice = topology.primaryDevice;
-    return primaryDevice ? [message.fromDeviceId, primaryDevice] : [message.fromDeviceId];
+    if (primaryDevice) {
+      return [message.fromDeviceId, primaryDevice];
+    }
+    return [message.fromDeviceId];
   }
 
   private calculateLoadBalancedPath(
@@ -776,6 +805,12 @@ export class DeviceRelayService extends EventEmitter {
     }
 
     const targetDeviceId = routingPath[routingPath.length - 1];
+    if (!targetDeviceId) {
+      throw new DeviceRelayError(
+        'Invalid routing path - no target device specified',
+        'INVALID_ROUTING_PATH'
+      );
+    }
     const targetDevice = this.deviceNodes.get(targetDeviceId);
 
     if (!targetDevice || !targetDevice.isReachable) {

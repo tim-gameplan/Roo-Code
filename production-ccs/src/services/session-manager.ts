@@ -3,8 +3,8 @@
  * Part of TASK-007.3.1 RCCS Core Implementation
  */
 
-import { logger } from '@/utils/logger';
-import { DeviceInfo, Session, RCCSConfig, SessionExpiredError } from '@/types/rccs';
+import { logger } from '../utils/logger';
+import { DeviceInfo, Session, RCCSConfig, SessionExpiredError } from '../types/rccs';
 
 export class SessionManager {
   private sessions: Map<string, Session> = new Map();

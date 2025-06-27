@@ -24,10 +24,69 @@ import {
   MobileProtocolError,
   NetworkError,
 } from '@/types/mobile';
-import { WebSocketService } from './websocket-manager';
 import { CompressionService } from './compression';
 import { MessageBatcher, BatchingConfig } from './message-batcher';
 import { MessageQueue, QueueConfig } from './message-queue';
+import { EventEmitter } from 'events';
+
+/**
+ * Simple WebSocket Service wrapper
+ */
+class WebSocketService extends EventEmitter {
+  private ws: WebSocket | undefined;
+  private url: string;
+
+  constructor(url: string) {
+    super();
+    this.url = url;
+  }
+
+  async connect(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      try {
+        this.ws = new WebSocket(this.url);
+
+        this.ws.onopen = () => {
+          resolve();
+        };
+
+        this.ws.onmessage = (event) => {
+          this.emit('message', event.data);
+        };
+
+        this.ws.onclose = (event) => {
+          this.emit('close', event.code, event.reason);
+        };
+
+        this.ws.onerror = (error) => {
+          this.emit('error', error);
+          reject(error);
+        };
+      } catch (error) {
+        reject(error);
+      }
+    });
+  }
+
+  async disconnect(): Promise<void> {
+    if (this.ws) {
+      this.ws.close();
+      this.ws = undefined;
+    }
+  }
+
+  async send(data: string): Promise<void> {
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+      throw new Error('WebSocket not connected');
+    }
+    this.ws.send(data);
+  }
+
+  async ping(): Promise<void> {
+    // Simple ping implementation
+    await this.send(JSON.stringify({ type: 'ping', timestamp: Date.now() }));
+  }
+}
 
 /**
  * Enhanced protocol configuration
@@ -140,7 +199,12 @@ export class EnhancedWebSocketProtocol {
     // Initialize services
     this.wsManager = new WebSocketService(config.websocket.url);
 
-    this.compression = new CompressionService();
+    this.compression = new CompressionService({
+      enabled: config.compression.enabled,
+      algorithms: config.compression.algorithms,
+      threshold: config.compression.threshold,
+      level: config.compression.level,
+    });
 
     this.batcher = new MessageBatcher(config.batching, this.sendBatchToNetwork.bind(this));
 
@@ -361,10 +425,7 @@ export class EnhancedWebSocketProtocol {
     if (batch.compression) {
       try {
         const compressedData = JSON.stringify(batch.messages);
-        const decompressed = await this.compression.decompress(
-          Buffer.from(compressedData),
-          batch.compression
-        );
+        const decompressed = await this.compression.decompress(compressedData, batch.compression);
         messages = JSON.parse(decompressed.toString());
       } catch (error) {
         logger.error('Failed to decompress batch', {
@@ -492,9 +553,8 @@ export class EnhancedWebSocketProtocol {
       // Compress if configured and beneficial
       if (this.config.compression.enabled && data.length >= this.config.compression.threshold) {
         const compressed = await this.compression.compress(
-          Buffer.from(data),
-          this.config.compression.algorithms[0] || 'gzip',
-          this.config.compression.level
+          data,
+          this.config.compression.algorithms[0] || 'gzip'
         );
 
         if (compressed.length < data.length * 0.9) {
@@ -587,7 +647,7 @@ export class EnhancedWebSocketProtocol {
   private stopHeartbeat(): void {
     if (this.heartbeatTimer) {
       clearInterval(this.heartbeatTimer);
-      this.heartbeatTimer = undefined;
+      this.heartbeatTimer = undefined as any;
     }
   }
 
@@ -707,7 +767,7 @@ export class EnhancedWebSocketProtocol {
   private stopReconnectTimer(): void {
     if (this.reconnectTimer) {
       clearTimeout(this.reconnectTimer);
-      this.reconnectTimer = undefined;
+      this.reconnectTimer = undefined as any;
     }
   }
 

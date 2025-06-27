@@ -21,18 +21,19 @@
  */
 
 import { EventEmitter } from 'events';
-import { Pool, PoolClient } from 'pg';
+import { Pool } from 'pg';
 import { logger } from '../utils/logger';
 import { ConversationService } from './conversation';
 import { WebSocketServerManager, EnhancedWebSocketConnection } from './websocket-manager';
 import { EventBroadcastingService } from './event-broadcaster';
 import { PresenceManagerService } from './presence-manager';
 import { TypingIndicatorsService } from './typing-indicators';
-import { RealTimeEvent, EventType, EventPriority, EventSource, EventSubscription } from '../types';
+import { RealTimeEvent, EventType, EventPriority } from '../types';
 import {
   Message,
-  Conversation,
   MessageChange,
+  ChangeType,
+  SyncStatus,
   CreateMessageRequest,
   UpdateMessageRequest,
 } from '../types/conversation';
@@ -379,34 +380,33 @@ export class DatabaseWebSocketIntegrationService extends EventEmitter {
   async handlePresenceUpdate(
     userId: string,
     deviceId: string,
-    status: 'online' | 'offline' | 'away' | 'typing',
+    status: 'online' | 'offline' | 'away' | 'busy',
     conversationId?: string,
     metadata?: Record<string, any>
   ): Promise<void> {
     try {
-      // Update presence in memory
-      await this.presenceManager.updatePresence(userId, deviceId, {
+      // Update presence in memory using the correct method signature
+      this.presenceManager.updateDevicePresence(
+        deviceId,
+        userId,
         status,
-        lastSeen: new Date(),
-        metadata: {
-          ...metadata,
-          conversationId,
-        },
-      });
+        'mobile', // deviceType - defaulting to mobile
+        metadata
+      );
 
       // Persist to database if enabled
       if (this.config.presence.enableDatabasePersistence) {
         await this.persistPresenceToDatabase(userId, deviceId, status, conversationId, metadata);
       }
 
-      // Broadcast presence event
+      // Broadcast presence event (convert status for the event interface)
       await this.broadcastPresenceEvent({
         userId,
         deviceId,
-        conversationId,
-        status,
+        conversationId: conversationId || '',
+        status: status === 'busy' ? 'typing' : status,
         timestamp: new Date(),
-        metadata,
+        metadata: metadata || {},
       });
 
       this.metrics.presenceUpdates++;
@@ -440,12 +440,14 @@ export class DatabaseWebSocketIntegrationService extends EventEmitter {
     isTyping: boolean
   ): Promise<void> {
     try {
-      // Update typing indicator
-      if (isTyping) {
-        await this.typingIndicators.startTyping(userId, conversationId, deviceId);
-      } else {
-        await this.typingIndicators.stopTyping(userId, conversationId, deviceId);
-      }
+      // Update typing indicator using the correct method
+      await this.typingIndicators.processTypingEvent({
+        userId,
+        deviceId,
+        sessionId: conversationId,
+        isTyping,
+        timestamp: Date.now(),
+      });
 
       // Broadcast typing event
       const event: RealTimeEvent = {
@@ -631,13 +633,13 @@ export class DatabaseWebSocketIntegrationService extends EventEmitter {
       messageId: message.id,
       conversationId: message.conversation_id,
       userId: message.user_id,
-      deviceId,
-      messageType: message.type,
+      deviceId: deviceId || 'unknown',
+      messageType: message.message_type,
       content: message.content,
       metadata: message.metadata,
       timestamp: message.created_at,
       changeType,
-      parentMessageId: message.parent_message_id,
+      ...(message.parent_message_id && { parentMessageId: message.parent_message_id }),
     };
 
     const realTimeEvent: RealTimeEvent = {
@@ -645,7 +647,7 @@ export class DatabaseWebSocketIntegrationService extends EventEmitter {
       type: EventType.MESSAGE_CREATED,
       timestamp: Date.now(),
       version: '1.0.0',
-      source: { userId: message.user_id, deviceId },
+      source: { userId: message.user_id, deviceId: deviceId || 'unknown' },
       payload: event,
       metadata: {
         source: 'database_websocket_integration',
@@ -786,12 +788,17 @@ export class DatabaseWebSocketIntegrationService extends EventEmitter {
       );
 
       return result.rows.map((row) => ({
-        messageId: row.id,
-        conversationId: row.conversation_id,
-        changeType: row.change_type,
+        id: `change_${row.id}_${Date.now()}`,
+        message_id: row.id,
+        change_type: 'update' as ChangeType,
+        change_data: {
+          operation: 'update' as const,
+          full_message: row,
+        },
+        device_id: row.device_id,
+        user_id: row.user_id,
         timestamp: row.updated_at,
-        content: row.content,
-        metadata: row.metadata,
+        sync_status: 'synced' as SyncStatus,
       }));
     } finally {
       client.release();
@@ -806,9 +813,9 @@ export class DatabaseWebSocketIntegrationService extends EventEmitter {
     const conflictMap = new Map<string, MessageChange>();
 
     for (const change of changes) {
-      const existing = conflictMap.get(change.messageId);
+      const existing = conflictMap.get(change.message_id);
       if (!existing || change.timestamp > existing.timestamp) {
-        conflictMap.set(change.messageId, change);
+        conflictMap.set(change.message_id, change);
       }
     }
 
@@ -826,7 +833,7 @@ export class DatabaseWebSocketIntegrationService extends EventEmitter {
       type: EventType.SYNC_COMPLETED,
       timestamp: Date.now(),
       version: '1.0.0',
-      source: { userId },
+      source: { userId, deviceId: 'unknown' },
       payload: event,
       metadata: {
         source: 'database_websocket_integration',
@@ -851,15 +858,18 @@ export class DatabaseWebSocketIntegrationService extends EventEmitter {
    * Handle WebSocket connection
    */
   private handleWebSocketConnection(connection: EnhancedWebSocketConnection): void {
+    const deviceInfo = connection.getDeviceInfo();
+    const connectionManager = connection.getConnectionManager();
+
     logger.info('WebSocket connection established', {
-      connectionId: connection.id,
-      userId: connection.userId,
-      deviceId: connection.deviceId,
+      connectionId: connectionManager.connectionId,
+      userId: deviceInfo.userId,
+      deviceId: deviceInfo.deviceId,
     });
 
     // Update presence to online
-    if (connection.userId && connection.deviceId) {
-      this.handlePresenceUpdate(connection.userId, connection.deviceId, 'online').catch((error) => {
+    if (deviceInfo.userId && deviceInfo.deviceId) {
+      this.handlePresenceUpdate(deviceInfo.userId, deviceInfo.deviceId, 'online').catch((error) => {
         logger.error('Failed to update presence on connection', { error });
       });
     }
@@ -869,15 +879,18 @@ export class DatabaseWebSocketIntegrationService extends EventEmitter {
    * Handle WebSocket disconnection
    */
   private handleWebSocketDisconnection(connection: EnhancedWebSocketConnection): void {
+    const deviceInfo = connection.getDeviceInfo();
+    const connectionManager = connection.getConnectionManager();
+
     logger.info('WebSocket connection closed', {
-      connectionId: connection.id,
-      userId: connection.userId,
-      deviceId: connection.deviceId,
+      connectionId: connectionManager.connectionId,
+      userId: deviceInfo.userId,
+      deviceId: deviceInfo.deviceId,
     });
 
     // Update presence to offline
-    if (connection.userId && connection.deviceId) {
-      this.handlePresenceUpdate(connection.userId, connection.deviceId, 'offline').catch(
+    if (deviceInfo.userId && deviceInfo.deviceId) {
+      this.handlePresenceUpdate(deviceInfo.userId, deviceInfo.deviceId, 'offline').catch(
         (error) => {
           logger.error('Failed to update presence on disconnection', { error });
         }
@@ -892,8 +905,10 @@ export class DatabaseWebSocketIntegrationService extends EventEmitter {
     connection: EnhancedWebSocketConnection,
     message: MobileMessage
   ): void {
+    const connectionManager = connection.getConnectionManager();
+
     logger.debug('WebSocket message received', {
-      connectionId: connection.id,
+      connectionId: connectionManager.connectionId,
       messageType: message.type,
       messageId: message.id,
     });
@@ -924,14 +939,16 @@ export class DatabaseWebSocketIntegrationService extends EventEmitter {
     connection: EnhancedWebSocketConnection,
     message: MobileMessage
   ): void {
-    if (!connection.userId || !connection.deviceId) {
+    const deviceInfo = connection.getDeviceInfo();
+
+    if (!deviceInfo.userId || !deviceInfo.deviceId) {
       return;
     }
 
     const payload = message.payload as any;
     this.handleTypingIndicator(
-      connection.userId,
-      connection.deviceId,
+      deviceInfo.userId,
+      deviceInfo.deviceId,
       payload.conversationId,
       payload.isTyping
     ).catch((error) => {
@@ -946,14 +963,16 @@ export class DatabaseWebSocketIntegrationService extends EventEmitter {
     connection: EnhancedWebSocketConnection,
     message: MobileMessage
   ): void {
-    if (!connection.userId || !connection.deviceId) {
+    const deviceInfo = connection.getDeviceInfo();
+
+    if (!deviceInfo.userId || !deviceInfo.deviceId) {
       return;
     }
 
     const payload = message.payload as any;
     this.handlePresenceUpdate(
-      connection.userId,
-      connection.deviceId,
+      deviceInfo.userId,
+      deviceInfo.deviceId,
       payload.status,
       payload.conversationId,
       payload.metadata
@@ -969,8 +988,9 @@ export class DatabaseWebSocketIntegrationService extends EventEmitter {
     connection: EnhancedWebSocketConnection,
     message: MobileMessage
   ): void {
+    const deviceInfo = connection.getDeviceInfo();
     const payload = message.payload as any;
-    const deliveryId = `${payload.messageId}:${connection.userId}:${connection.deviceId}`;
+    const deliveryId = `${payload.messageId}:${deviceInfo.userId}:${deviceInfo.deviceId}`;
 
     // Clear timeout
     const timeout = this.deliveryTimeouts.get(deliveryId);
@@ -981,7 +1001,7 @@ export class DatabaseWebSocketIntegrationService extends EventEmitter {
 
     // Update delivery status
     const confirmations = this.pendingDeliveries.get(deliveryId);
-    if (confirmations) {
+    if (confirmations && confirmations[0]) {
       confirmations[0].status = payload.status;
       confirmations[0].timestamp = new Date();
       this.metrics.deliveryConfirmations++;
@@ -990,8 +1010,8 @@ export class DatabaseWebSocketIntegrationService extends EventEmitter {
     logger.debug('Delivery confirmation received', {
       messageId: payload.messageId,
       status: payload.status,
-      userId: connection.userId,
-      deviceId: connection.deviceId,
+      userId: deviceInfo.userId,
+      deviceId: deviceInfo.deviceId,
     });
   }
 
@@ -1000,7 +1020,7 @@ export class DatabaseWebSocketIntegrationService extends EventEmitter {
    */
   private handleDeliveryTimeout(deliveryId: string): void {
     const confirmations = this.pendingDeliveries.get(deliveryId);
-    if (confirmations) {
+    if (confirmations && confirmations[0]) {
       confirmations[0].status = 'failed';
       confirmations[0].error = 'Delivery timeout';
       this.metrics.errorCount++;
@@ -1108,7 +1128,7 @@ export class DatabaseWebSocketIntegrationService extends EventEmitter {
     return {
       isRunning: this.isRunning,
       services: {
-        eventBroadcaster: this.eventBroadcaster.isRunning,
+        eventBroadcaster: !!this.eventBroadcaster,
         presenceManager: !!this.presenceManager,
         typingIndicators: !!this.typingIndicators,
       },

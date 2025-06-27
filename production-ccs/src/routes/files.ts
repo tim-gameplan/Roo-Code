@@ -98,11 +98,12 @@ export function createFileRoutes(
     authMiddleware.authenticate,
     RateLimitMiddleware.upload,
     ValidationMiddleware.validateBody(fileUploadSchema),
-    async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
       try {
         const userId = req.user?.id;
         if (!userId) {
-          return res.status(401).json({ error: 'User not authenticated' });
+          res.status(401).json({ error: 'User not authenticated' });
+          return;
         }
 
         const deviceId = req.headers['x-device-id'] as string;
@@ -154,28 +155,32 @@ export function createFileRoutes(
     '/upload/:sessionId/chunk',
     authMiddleware.authenticate,
     upload.single('chunk'),
-    async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
       try {
         const userId = req.user?.id;
         if (!userId) {
-          return res.status(401).json({ error: 'User not authenticated' });
+          res.status(401).json({ error: 'User not authenticated' });
+          return;
         }
 
         const { sessionId } = req.params;
 
         if (!sessionId) {
-          return res.status(400).json({ error: 'Session ID is required' });
+          res.status(400).json({ error: 'Session ID is required' });
+          return;
         }
 
         const chunkNumber = parseInt(req.body.chunkNumber);
         const chunkData = req.file?.buffer;
 
         if (!chunkData) {
-          return res.status(400).json({ error: 'No chunk data provided' });
+          res.status(400).json({ error: 'No chunk data provided' });
+          return;
         }
 
         if (isNaN(chunkNumber)) {
-          return res.status(400).json({ error: 'Invalid chunk number' });
+          res.status(400).json({ error: 'Invalid chunk number' });
+          return;
         }
 
         const progress = await fileService.uploadFileChunk(
@@ -210,17 +215,19 @@ export function createFileRoutes(
   router.get(
     '/:fileId/download',
     authMiddleware.authenticate,
-    async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
       try {
         const userId = req.user?.id;
         if (!userId) {
-          return res.status(401).json({ error: 'User not authenticated' });
+          res.status(401).json({ error: 'User not authenticated' });
+          return;
         }
 
         const { fileId } = req.params;
 
         if (!fileId) {
-          return res.status(400).json({ error: 'File ID is required' });
+          res.status(400).json({ error: 'File ID is required' });
+          return;
         }
 
         const rangeHeader = req.headers.range;
@@ -276,11 +283,12 @@ export function createFileRoutes(
   router.get(
     '/:fileId',
     authMiddleware.authenticate,
-    async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
       try {
         const userId = req.user?.id;
         if (!userId) {
-          return res.status(401).json({ error: 'User not authenticated' });
+          res.status(401).json({ error: 'User not authenticated' });
+          return;
         }
 
         const { fileId } = req.params;
@@ -308,11 +316,12 @@ export function createFileRoutes(
     '/search',
     authMiddleware.authenticate,
     ValidationMiddleware.validateQuery(fileSearchSchema),
-    async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
       try {
         const userId = req.user?.id;
         if (!userId) {
-          return res.status(401).json({ error: 'User not authenticated' });
+          res.status(401).json({ error: 'User not authenticated' });
+          return;
         }
 
         const query: any = {
@@ -373,17 +382,19 @@ export function createFileRoutes(
   router.delete(
     '/:fileId',
     authMiddleware.authenticate,
-    async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
       try {
         const userId = req.user?.id;
         if (!userId) {
-          return res.status(401).json({ error: 'User not authenticated' });
+          res.status(401).json({ error: 'User not authenticated' });
+          return;
         }
 
         const { fileId } = req.params;
 
         if (!fileId) {
-          return res.status(400).json({ error: 'File ID is required' });
+          res.status(400).json({ error: 'File ID is required' });
+          return;
         }
 
         await fileService.deleteFile(fileId, userId);
@@ -410,13 +421,14 @@ export function createFileRoutes(
   router.get(
     '/admin/metrics',
     authMiddleware.authenticate,
-    async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
       try {
         const userId = req.user?.id;
         const userRole = (req.user as any)?.role;
 
         if (!userId || userRole !== 'admin') {
-          return res.status(403).json({ error: 'Admin access required' });
+          res.status(403).json({ error: 'Admin access required' });
+          return;
         }
 
         const metrics = fileService.getMetrics();
@@ -438,7 +450,7 @@ export function createFileRoutes(
   /**
    * Error handling middleware for file operations
    */
-  router.use((error: Error, req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+  router.use((error: Error, req: AuthenticatedRequest, res: Response, next: NextFunction): void => {
     logger.error('File API error', {
       error: error.message,
       stack: error.stack,
@@ -448,44 +460,49 @@ export function createFileRoutes(
     });
 
     if (error instanceof FileNotFoundError) {
-      return res.status(404).json({
+      res.status(404).json({
         success: false,
         error: 'File not found',
         code: 'FILE_NOT_FOUND',
       });
+      return;
     }
 
     if (error instanceof FilePermissionError) {
-      return res.status(403).json({
+      res.status(403).json({
         success: false,
         error: 'Permission denied',
         code: 'FILE_PERMISSION_DENIED',
       });
+      return;
     }
 
     if (error instanceof FileSizeError) {
-      return res.status(413).json({
+      res.status(413).json({
         success: false,
         error: 'File size exceeds limit',
         code: 'FILE_SIZE_EXCEEDED',
       });
+      return;
     }
 
     if (error instanceof FileTypeError) {
-      return res.status(415).json({
+      res.status(415).json({
         success: false,
         error: 'File type not allowed',
         code: 'FILE_TYPE_NOT_ALLOWED',
       });
+      return;
     }
 
     if (error instanceof FileError) {
-      return res.status(error.statusCode || 500).json({
+      res.status(error.statusCode || 500).json({
         success: false,
         error: error.message,
         code: error.code,
         details: error.details,
       });
+      return;
     }
 
     // Generic error

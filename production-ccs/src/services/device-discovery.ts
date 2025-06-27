@@ -145,7 +145,7 @@ export class DeviceDiscoveryService extends EventEmitter {
     }
 
     // Check if cache is still valid
-    if (cached.length > 0) {
+    if (cached.length > 0 && cached[0]) {
       const cacheAge = Date.now() - cached[0].deviceInfo.lastSeen.getTime();
       if (cacheAge > this.config.discovery.cacheTimeout) {
         this.discoveryCache.delete(cacheKey);

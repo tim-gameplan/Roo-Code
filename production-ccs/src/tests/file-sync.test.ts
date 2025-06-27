@@ -247,7 +247,7 @@ describe('FileSyncService', () => {
         });
 
         expect(result.workspaces).toHaveLength(1);
-        expect(result.workspaces[0].fileCount).toBe(10);
+        expect(result.workspaces[0]?.fileCount).toBe(10);
         expect(result.total).toBe(1);
         expect(result.hasMore).toBe(false);
       });
@@ -335,7 +335,7 @@ describe('FileSyncService', () => {
         expect(result.syncState.syncStatus).toBe('conflict');
         expect(result.requiresResolution).toBe(true);
         expect(result.conflicts).toHaveLength(1);
-        expect(result.conflicts![0].type).toBe('content');
+        expect(result.conflicts![0]?.type).toBe('content');
       });
 
       it('should throw error if workspace not found', async () => {

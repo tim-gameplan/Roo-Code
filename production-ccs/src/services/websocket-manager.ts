@@ -70,7 +70,15 @@ export class EnhancedWebSocketConnection extends EventEmitter {
     // Initialize services
     this.compressionService = new CompressionService(config.compression);
     this.messageBatcher = new MessageBatcher(config.batching, this.sendBatch.bind(this));
-    this.messageQueue = new MessageQueueService(config.queue, deviceInfo.deviceId);
+    this.messageQueue = new MessageQueueService(
+      {
+        ...config.queue,
+        retryAttempts: config.queue.retryPolicy?.maxAttempts || 3,
+        retryDelay: config.queue.retryPolicy?.backoffMultiplier || 1000,
+        ttl: config.queue.maxAge || 300000,
+      },
+      deviceInfo.deviceId
+    );
 
     // Initialize metrics
     this.metrics = this.initializeMetrics();
@@ -317,7 +325,7 @@ export class EnhancedWebSocketConnection extends EventEmitter {
   private handlePong(): void {
     if (this.heartbeatTimeout) {
       clearTimeout(this.heartbeatTimeout);
-      this.heartbeatTimeout = undefined;
+      this.heartbeatTimeout = undefined as any;
     }
   }
 
@@ -472,11 +480,11 @@ export class EnhancedWebSocketConnection extends EventEmitter {
   private stopHeartbeat(): void {
     if (this.heartbeatInterval) {
       clearInterval(this.heartbeatInterval);
-      this.heartbeatInterval = undefined;
+      this.heartbeatInterval = undefined as any;
     }
     if (this.heartbeatTimeout) {
       clearTimeout(this.heartbeatTimeout);
-      this.heartbeatTimeout = undefined;
+      this.heartbeatTimeout = undefined as any;
     }
   }
 
@@ -623,6 +631,13 @@ export class EnhancedWebSocketConnection extends EventEmitter {
   }
 
   /**
+   * Get connection ID
+   */
+  public getConnectionId(): string {
+    return this.connectionId;
+  }
+
+  /**
    * Get connection state
    */
   public getState(): ConnectionState {
@@ -744,16 +759,16 @@ export class WebSocketServerManager extends EventEmitter {
    */
   private setupConnectionHandlers(connection: EnhancedWebSocketConnection): void {
     connection.on('close', () => {
-      this.connections.delete(connection.connectionId);
+      this.connections.delete(connection.getConnectionId());
       logger.info('WebSocket connection removed', {
-        connectionId: connection.connectionId,
+        connectionId: connection.getConnectionId(),
         remainingConnections: this.connections.size,
       });
     });
 
     connection.on('error', (error) => {
       logger.error('WebSocket connection error', {
-        connectionId: connection.connectionId,
+        connectionId: connection.getConnectionId(),
         error: error.message,
       });
     });
@@ -834,7 +849,7 @@ export class WebSocketServerManager extends EventEmitter {
     const promises = Array.from(this.connections.values()).map((connection) =>
       connection.sendMessage(message).catch((error) => {
         logger.error('Error broadcasting message', {
-          connectionId: connection.connectionId,
+          connectionId: connection.getConnectionId(),
           error: error instanceof Error ? error.message : String(error),
         });
       })
