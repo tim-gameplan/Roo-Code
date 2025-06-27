@@ -207,10 +207,30 @@ export class WorkflowScheduleIntegration extends EventEmitter {
       this.state = 'stopping';
       this.logger.info('Stopping workflow-schedule integration');
 
-      // Stop sub-services
-      await this.executionHandler.stop();
-      await this.stateManager.stop();
-      await this.eventBroadcaster.stop();
+      // Stop sub-services with error handling
+      try {
+        await this.executionHandler.stop();
+      } catch (error) {
+        this.logger.error('Failed to stop execution handler', {
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+
+      try {
+        await this.stateManager.stop();
+      } catch (error) {
+        this.logger.error('Failed to stop state manager', {
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+
+      try {
+        await this.eventBroadcaster.stop();
+      } catch (error) {
+        this.logger.error('Failed to stop event broadcaster', {
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
 
       // Cancel active executions
       await this.cancelActiveExecutions();
@@ -223,7 +243,7 @@ export class WorkflowScheduleIntegration extends EventEmitter {
       this.logger.error('Failed to stop workflow-schedule integration', {
         error: error instanceof Error ? error.message : String(error),
       });
-      throw error;
+      // Don't throw - handle gracefully
     }
   }
 

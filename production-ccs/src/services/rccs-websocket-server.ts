@@ -8,7 +8,7 @@
 import WebSocket, { WebSocketServer } from 'ws';
 import { EventEmitter } from 'events';
 import { IncomingMessage } from 'http';
-import { logger } from '@/utils/logger';
+import { logger } from '../utils/logger';
 import {
   DeviceInfo as RCCSDeviceInfo,
   Session,
@@ -24,8 +24,8 @@ import {
   MessageDeliveryError,
   CloudMessageType,
   MessagePriority,
-} from '@/types/rccs';
-import { DeviceInfo as MobileDeviceInfo } from '@/types/mobile';
+} from '../types/rccs';
+import { DeviceInfo as MobileDeviceInfo } from '../types/mobile';
 import { MessageRouter } from './message-router';
 import { SessionManager } from './session-manager';
 import { DeviceRegistry } from './device-registry';

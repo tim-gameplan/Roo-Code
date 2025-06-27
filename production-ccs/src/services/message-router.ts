@@ -3,14 +3,14 @@
  * Part of TASK-007.3.1 RCCS Core Implementation
  */
 
-import { logger } from '@/utils/logger';
+import { logger } from '../utils/logger';
 import {
   CloudMessage,
   MessageRouteResult,
   CloudMessageType,
   DeviceNotFoundError,
   MessageDeliveryError,
-} from '@/types/rccs';
+} from '../types/rccs';
 
 export class MessageRouter {
   private server: any; // RCCSWebSocketServer reference

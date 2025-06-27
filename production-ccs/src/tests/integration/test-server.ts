@@ -5,9 +5,9 @@
  * It starts the RCCS WebSocket server on the test port and provides test-specific functionality.
  */
 
-import { RCCSWebSocketServer } from '@/services/rccs-websocket-server';
-import { RCCSConfig } from '@/types/rccs';
-import { logger } from '@/utils/logger';
+import { RCCSWebSocketServer } from '../../services/rccs-websocket-server';
+import { RCCSConfig } from '../../types/rccs';
+import { logger } from '../../utils/logger';
 
 export class TestWebSocketServer {
   private server: RCCSWebSocketServer | null = null;

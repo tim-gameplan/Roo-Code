@@ -5,8 +5,8 @@
  * Provides centralized device management and capability tracking.
  */
 
-import { logger } from '@/utils/logger';
-import { DeviceInfo, DeviceType } from '@/types/mobile';
+import { logger } from '../utils/logger';
+import { DeviceInfo, DeviceType } from '../types/mobile';
 import { EventEmitter } from 'events';
 
 /**

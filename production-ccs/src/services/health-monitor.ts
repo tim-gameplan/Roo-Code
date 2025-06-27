@@ -5,7 +5,7 @@
  * Provides health checks, alerts, and diagnostic information for the RCCS system.
  */
 
-import { logger } from '@/utils/logger';
+import { logger } from '../utils/logger';
 import { EventEmitter } from 'events';
 
 /**
