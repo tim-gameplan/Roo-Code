@@ -53,5 +53,8 @@
 			"undici": ">=5.29.0",
 			"brace-expansion": ">=2.0.2"
 		}
+	},
+	"dependencies": {
+		"ws": "^8.18.3"
 	}
 }

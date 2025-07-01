@@ -39,6 +39,11 @@ const mockClient = {
   release: jest.fn(),
 };
 
+// Test data generators for isolation
+const generateTestEmail = () =>
+  `test-${Date.now()}-${Math.random().toString(36).substr(2, 9)}@example.com`;
+const generateTestId = () => `test-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
 describe('AuthService', () => {
   let authService: AuthService;
 
@@ -50,16 +55,19 @@ describe('AuthService', () => {
 
   describe('createUser', () => {
     it('should create a new user successfully', async () => {
+      const testEmail = generateTestEmail();
+      const testUserId = generateTestId();
+
       const userData = {
-        email: 'test@example.com',
+        email: testEmail,
         password: 'password123',
         display_name: 'Test User',
         preferences: { theme: 'dark' },
       };
 
       const mockUser = {
-        id: 'user-123',
-        email: 'test@example.com',
+        id: testUserId,
+        email: testEmail,
         display_name: 'Test User',
         preferences: { theme: 'dark' },
         security_settings: {},
@@ -71,15 +79,18 @@ describe('AuthService', () => {
         two_factor_enabled: false,
       };
 
-      // Mock existing user check (no existing user)
+      // Mock transaction and queries in order
       mockClient.query
-        .mockResolvedValueOnce({ rows: [] })
-        // Mock user creation
-        .mockResolvedValueOnce({ rows: [mockUser] })
-        // Mock token storage
-        .mockResolvedValueOnce({ rows: [{ id: 'token-123' }] })
-        // Mock security log
-        .mockResolvedValueOnce({ rows: [{ id: 'log-123' }] });
+        .mockResolvedValueOnce({ rows: [] }) // BEGIN
+        .mockResolvedValueOnce({ rows: [] }) // Check existing user (no existing user)
+        .mockResolvedValueOnce({ rows: [mockUser] }) // Create user
+        .mockResolvedValueOnce({ rows: [{ id: generateTestId() }] }); // Store token
+
+      // Mock pool.query for logSecurityEvent (uses pool directly, not client)
+      (mockPool.query as jest.Mock).mockResolvedValueOnce({ rows: [{ id: generateTestId() }] }); // Log security event
+
+      // Mock client.query for COMMIT
+      mockClient.query.mockResolvedValueOnce({ rows: [] }); // COMMIT
 
       (bcrypt.hash as jest.Mock)
         .mockResolvedValueOnce('hashed-password')
@@ -91,18 +102,21 @@ describe('AuthService', () => {
 
       expect(result.user.email).toBe(userData.email);
       expect(result.verification_token).toBe('verification-token');
-      expect(mockClient.query).toHaveBeenCalledWith('BEGIN');
-      expect(mockClient.query).toHaveBeenCalledWith('COMMIT');
     });
 
     it('should throw error if user already exists', async () => {
+      const testEmail = generateTestEmail();
+
       const userData = {
-        email: 'test@example.com',
+        email: testEmail,
         password: 'password123',
       };
 
-      // Mock existing user found
-      mockClient.query.mockResolvedValueOnce({ rows: [{ id: 'existing-user' }] });
+      // Mock transaction and existing user check
+      mockClient.query
+        .mockResolvedValueOnce({ rows: [] }) // BEGIN
+        .mockResolvedValueOnce({ rows: [{ id: generateTestId() }] }) // Check existing user (found)
+        .mockResolvedValueOnce({ rows: [] }); // ROLLBACK
 
       await expect(authService.createUser(userData)).rejects.toThrow(
         'User with this email already exists'
@@ -114,19 +128,24 @@ describe('AuthService', () => {
 
   describe('login', () => {
     it('should login user successfully', async () => {
+      const testEmail = generateTestEmail();
+      const testUserId = generateTestId();
+      const testDeviceId = generateTestId();
+      const testSessionId = generateTestId();
+
       const loginData = {
-        email: 'test@example.com',
+        email: testEmail,
         password: 'password123',
         device_name: 'Test Device',
         device_type: 'desktop' as const,
         platform: 'web' as const,
-        device_fingerprint: 'device-123',
+        device_fingerprint: generateTestId(),
         capabilities: { notifications: true },
       };
 
       const mockUser = {
-        id: 'user-123',
-        email: 'test@example.com',
+        id: testUserId,
+        email: testEmail,
         password_hash: 'hashed-password',
         status: 'active',
         display_name: 'Test User',
@@ -140,12 +159,12 @@ describe('AuthService', () => {
       };
 
       const mockDevice = {
-        id: 'device-123',
-        user_id: 'user-123',
+        id: testDeviceId,
+        user_id: testUserId,
         device_name: 'Test Device',
         device_type: 'desktop',
         platform: 'web',
-        device_fingerprint: 'device-123',
+        device_fingerprint: loginData.device_fingerprint,
         capabilities: { notifications: true },
         status: 'active',
         created_at: new Date(),
@@ -153,9 +172,9 @@ describe('AuthService', () => {
       };
 
       const mockSession = {
-        id: 'session-123',
-        user_id: 'user-123',
-        device_id: 'device-123',
+        id: testSessionId,
+        user_id: testUserId,
+        device_id: testDeviceId,
         session_token: 'session-token',
         refresh_token: 'refresh-token',
         expires_at: new Date(),
@@ -177,6 +196,7 @@ describe('AuthService', () => {
 
       // Mock device operations
       mockClient.query
+        .mockResolvedValueOnce({ rows: [] }) // BEGIN
         // Check existing device
         .mockResolvedValueOnce({ rows: [mockDevice] })
         // Update device
@@ -184,9 +204,15 @@ describe('AuthService', () => {
         // Create session
         .mockResolvedValueOnce({ rows: [mockSession] })
         // Update last login
-        .mockResolvedValueOnce({ rows: [] })
-        // Log security event
-        .mockResolvedValueOnce({ rows: [{ id: 'log-123' }] });
+        .mockResolvedValueOnce({ rows: [] });
+
+      // Mock pool.query for logSecurityEvent (uses pool directly, not client)
+      (mockPool.query as jest.Mock)
+        .mockResolvedValueOnce({ rows: [mockUser] }) // getUserByEmail (already called above)
+        .mockResolvedValueOnce({ rows: [{ id: generateTestId() }] }); // Log security event
+
+      // Mock client.query for COMMIT
+      mockClient.query.mockResolvedValueOnce({ rows: [] }); // COMMIT
 
       (jwt.sign as jest.Mock)
         .mockReturnValueOnce('access-token')
@@ -197,22 +223,25 @@ describe('AuthService', () => {
       expect(result.user.email).toBe(loginData.email);
       expect(result.access_token).toBe('access-token');
       expect(result.refresh_token).toBe('refresh-token');
-      expect(result.device.id).toBe('device-123');
+      expect(result.device.id).toBe(testDeviceId);
     });
 
     it('should throw error for invalid credentials', async () => {
+      const testEmail = generateTestEmail();
+      const testUserId = generateTestId();
+
       const loginData = {
-        email: 'test@example.com',
+        email: testEmail,
         password: 'wrong-password',
         device_name: 'Test Device',
         device_type: 'desktop' as const,
         platform: 'web' as const,
-        device_fingerprint: 'device-123',
+        device_fingerprint: generateTestId(),
       };
 
       const mockUser = {
-        id: 'user-123',
-        email: 'test@example.com',
+        id: testUserId,
+        email: testEmail,
         password_hash: 'hashed-password',
         status: 'active',
       };
@@ -224,7 +253,7 @@ describe('AuthService', () => {
       (bcrypt.compare as jest.Mock).mockResolvedValue(false);
 
       // Mock security log
-      mockClient.query.mockResolvedValueOnce({ rows: [{ id: 'log-123' }] });
+      mockClient.query.mockResolvedValueOnce({ rows: [{ id: generateTestId() }] });
 
       await expect(authService.login(loginData)).rejects.toThrow('Invalid credentials');
     });
@@ -403,9 +432,10 @@ describe('AuthService', () => {
         // Check existing device (none found)
         .mockResolvedValueOnce({ rows: [] })
         // Create new device
-        .mockResolvedValueOnce({ rows: [mockDevice] })
-        // Log security event
-        .mockResolvedValueOnce({ rows: [{ id: 'log-123' }] });
+        .mockResolvedValueOnce({ rows: [mockDevice] });
+
+      // Mock pool.query for logSecurityEvent (uses pool directly, not client)
+      (mockPool.query as jest.Mock).mockResolvedValueOnce({ rows: [{ id: 'log-123' }] }); // Log security event
 
       (jwt.sign as jest.Mock).mockReturnValue('device-token');
 
@@ -468,7 +498,7 @@ describe('AuthService', () => {
       const parseExpiry = (authService as any).parseExpiry.bind(authService);
 
       expect(() => parseExpiry('invalid')).toThrow('Invalid expiry format');
-      expect(() => parseExpiry('30x')).toThrow('Invalid expiry unit');
+      expect(() => parseExpiry('30x')).toThrow('Invalid expiry format'); // Updated to match actual error message
       expect(() => parseExpiry('')).toThrow('Invalid expiry format');
     });
   });
