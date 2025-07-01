@@ -1,0 +1,886 @@
+{
+	"timestamp": "2025-07-01T21:10:56.329Z",
+	"phase": "3.2.2",
+	"issue": "#44",
+	"commands": {
+		"totalCommands": 21,
+		"validCommands": 20,
+		"invalidCommands": 1,
+		"commandDetails": {
+			"cline.openInCursor": {
+				"valid": true,
+				"executionTime": 51,
+				"registered": true,
+				"accessible": true
+			},
+			"cline.openInVSCode": {
+				"valid": true,
+				"executionTime": 34,
+				"registered": true,
+				"accessible": true
+			},
+			"cline.openInZed": {
+				"valid": true,
+				"executionTime": 28,
+				"registered": true,
+				"accessible": true
+			},
+			"cline.openInWindsurf": {
+				"valid": true,
+				"executionTime": 53,
+				"registered": true,
+				"accessible": true
+			},
+			"cline.exportChat": {
+				"valid": true,
+				"executionTime": 91,
+				"registered": true,
+				"accessible": true
+			},
+			"cline.importChat": {
+				"valid": true,
+				"executionTime": 23,
+				"registered": true,
+				"accessible": true
+			},
+			"cline.openMcpSettings": {
+				"valid": true,
+				"executionTime": 57,
+				"registered": true,
+				"accessible": true
+			},
+			"cline.resetState": {
+				"valid": true,
+				"executionTime": 50,
+				"registered": true,
+				"accessible": true
+			},
+			"cline.clearHistory": {
+				"valid": false,
+				"executionTime": 75,
+				"registered": true,
+				"accessible": false
+			},
+			"cline.showWelcome": {
+				"valid": true,
+				"executionTime": 76,
+				"registered": true,
+				"accessible": true
+			},
+			"cline.openSettings": {
+				"valid": true,
+				"executionTime": 9,
+				"registered": true,
+				"accessible": true
+			},
+			"cline.toggleDeveloperMode": {
+				"valid": true,
+				"executionTime": 0,
+				"registered": true,
+				"accessible": true
+			},
+			"cline.runDiagnostics": {
+				"valid": true,
+				"executionTime": 40,
+				"registered": true,
+				"accessible": true
+			},
+			"cline.refreshMcpServers": {
+				"valid": true,
+				"executionTime": 40,
+				"registered": true,
+				"accessible": true
+			},
+			"cline.validateConfig": {
+				"valid": true,
+				"executionTime": 5,
+				"registered": true,
+				"accessible": true
+			},
+			"cline.exportLogs": {
+				"valid": true,
+				"executionTime": 15,
+				"registered": true,
+				"accessible": true
+			},
+			"cline.clearCache": {
+				"valid": true,
+				"executionTime": 22,
+				"registered": true,
+				"accessible": true
+			},
+			"cline.restartExtension": {
+				"valid": true,
+				"executionTime": 12,
+				"registered": true,
+				"accessible": true
+			},
+			"cline.showHelp": {
+				"valid": true,
+				"executionTime": 91,
+				"registered": true,
+				"accessible": true
+			},
+			"cline.reportIssue": {
+				"valid": true,
+				"executionTime": 94,
+				"registered": true,
+				"accessible": true
+			},
+			"cline.checkUpdates": {
+				"valid": true,
+				"executionTime": 28,
+				"registered": true,
+				"accessible": true
+			}
+		}
+	},
+	"mcpServers": {
+		"totalServers": 5,
+		"connectedServers": 4,
+		"failedServers": 1,
+		"serverDetails": {
+			"eslint-code-quality": {
+				"connected": true,
+				"responseTime": 152,
+				"toolCount": 1,
+				"type": "stdio",
+				"port": null,
+				"status": "active"
+			},
+			"prettier-formatter": {
+				"connected": true,
+				"responseTime": 205,
+				"toolCount": 3,
+				"type": "stdio",
+				"port": null,
+				"status": "active"
+			},
+			"pnpm-package-manager": {
+				"connected": false,
+				"responseTime": 161,
+				"toolCount": 4,
+				"type": "stdio",
+				"port": null,
+				"status": "failed"
+			},
+			"github.com/github/github-mcp-server": {
+				"connected": true,
+				"responseTime": 77,
+				"toolCount": 4,
+				"type": "docker",
+				"port": null,
+				"status": "active"
+			},
+			"github.com/modelcontextprotocol/servers/tree/main/src/postgres": {
+				"connected": true,
+				"responseTime": 57,
+				"toolCount": 9,
+				"type": "tcp",
+				"port": 5432,
+				"status": "active"
+			}
+		}
+	},
+	"conversation": {
+		"totalFeatures": 9,
+		"workingFeatures": 9,
+		"brokenFeatures": 0,
+		"featureDetails": {
+			"messageInput": {
+				"working": true,
+				"loadTime": 269,
+				"responsive": true,
+				"accessible": true
+			},
+			"messageHistory": {
+				"working": true,
+				"loadTime": 523,
+				"responsive": true,
+				"accessible": true
+			},
+			"fileAttachment": {
+				"working": true,
+				"loadTime": 269,
+				"responsive": true,
+				"accessible": true
+			},
+			"codeBlocks": {
+				"working": true,
+				"loadTime": 156,
+				"responsive": true,
+				"accessible": true
+			},
+			"imageDisplay": {
+				"working": true,
+				"loadTime": 185,
+				"responsive": true,
+				"accessible": true
+			},
+			"scrolling": {
+				"working": true,
+				"loadTime": 406,
+				"responsive": true,
+				"accessible": true
+			},
+			"messageSearch": {
+				"working": true,
+				"loadTime": 353,
+				"responsive": true,
+				"accessible": true
+			},
+			"exportChat": {
+				"working": true,
+				"loadTime": 186,
+				"responsive": true,
+				"accessible": true
+			},
+			"clearHistory": {
+				"working": true,
+				"loadTime": 255,
+				"responsive": true,
+				"accessible": true
+			}
+		}
+	},
+	"shortcuts": {
+		"totalShortcuts": 8,
+		"workingShortcuts": 8,
+		"brokenShortcuts": 0,
+		"shortcutDetails": {
+			"Ctrl+Shift+P": {
+				"working": true,
+				"action": "openCommandPalette",
+				"responseTime": 21,
+				"registered": true
+			},
+			"Ctrl+K Ctrl+C": {
+				"working": true,
+				"action": "clearChat",
+				"responseTime": 30,
+				"registered": true
+			},
+			"Ctrl+K Ctrl+E": {
+				"working": true,
+				"action": "exportChat",
+				"responseTime": 43,
+				"registered": true
+			},
+			"Ctrl+K Ctrl+I": {
+				"working": true,
+				"action": "importChat",
+				"responseTime": 41,
+				"registered": true
+			},
+			"Ctrl+K Ctrl+S": {
+				"working": true,
+				"action": "openSettings",
+				"responseTime": 53,
+				"registered": true
+			},
+			"Ctrl+K Ctrl+H": {
+				"working": true,
+				"action": "showHelp",
+				"responseTime": 14,
+				"registered": true
+			},
+			"Escape": {
+				"working": true,
+				"action": "closeDialog",
+				"responseTime": 50,
+				"registered": true
+			},
+			"Enter": {
+				"working": true,
+				"action": "sendMessage",
+				"responseTime": 24,
+				"registered": true
+			}
+		}
+	},
+	"errorHandling": {
+		"totalScenarios": 8,
+		"handledErrors": 7,
+		"unhandledErrors": 1,
+		"errorDetails": {
+			"networkTimeout": {
+				"handled": true,
+				"recoveryTime": 1079,
+				"gracefulDegradation": true,
+				"userNotified": true
+			},
+			"invalidCommand": {
+				"handled": true,
+				"recoveryTime": 313,
+				"gracefulDegradation": true,
+				"userNotified": true
+			},
+			"mcpServerDown": {
+				"handled": true,
+				"recoveryTime": 952,
+				"gracefulDegradation": true,
+				"userNotified": true
+			},
+			"fileNotFound": {
+				"handled": false,
+				"recoveryTime": 138,
+				"gracefulDegradation": true,
+				"userNotified": false
+			},
+			"permissionDenied": {
+				"handled": true,
+				"recoveryTime": 372,
+				"gracefulDegradation": true,
+				"userNotified": true
+			},
+			"memoryLimit": {
+				"handled": true,
+				"recoveryTime": 992,
+				"gracefulDegradation": true,
+				"userNotified": true
+			},
+			"syntaxError": {
+				"handled": true,
+				"recoveryTime": 362,
+				"gracefulDegradation": true,
+				"userNotified": true
+			},
+			"authenticationFailed": {
+				"handled": true,
+				"recoveryTime": 211,
+				"gracefulDegradation": false,
+				"userNotified": true
+			}
+		}
+	},
+	"performance": {
+		"command_validation": {
+			"duration": 0,
+			"success": false,
+			"result": {
+				"totalCommands": 21,
+				"validCommands": 20,
+				"invalidCommands": 1,
+				"commandDetails": {
+					"cline.openInCursor": {
+						"valid": true,
+						"executionTime": 51,
+						"registered": true,
+						"accessible": true
+					},
+					"cline.openInVSCode": {
+						"valid": true,
+						"executionTime": 34,
+						"registered": true,
+						"accessible": true
+					},
+					"cline.openInZed": {
+						"valid": true,
+						"executionTime": 28,
+						"registered": true,
+						"accessible": true
+					},
+					"cline.openInWindsurf": {
+						"valid": true,
+						"executionTime": 53,
+						"registered": true,
+						"accessible": true
+					},
+					"cline.exportChat": {
+						"valid": true,
+						"executionTime": 91,
+						"registered": true,
+						"accessible": true
+					},
+					"cline.importChat": {
+						"valid": true,
+						"executionTime": 23,
+						"registered": true,
+						"accessible": true
+					},
+					"cline.openMcpSettings": {
+						"valid": true,
+						"executionTime": 57,
+						"registered": true,
+						"accessible": true
+					},
+					"cline.resetState": {
+						"valid": true,
+						"executionTime": 50,
+						"registered": true,
+						"accessible": true
+					},
+					"cline.clearHistory": {
+						"valid": false,
+						"executionTime": 75,
+						"registered": true,
+						"accessible": false
+					},
+					"cline.showWelcome": {
+						"valid": true,
+						"executionTime": 76,
+						"registered": true,
+						"accessible": true
+					},
+					"cline.openSettings": {
+						"valid": true,
+						"executionTime": 9,
+						"registered": true,
+						"accessible": true
+					},
+					"cline.toggleDeveloperMode": {
+						"valid": true,
+						"executionTime": 0,
+						"registered": true,
+						"accessible": true
+					},
+					"cline.runDiagnostics": {
+						"valid": true,
+						"executionTime": 40,
+						"registered": true,
+						"accessible": true
+					},
+					"cline.refreshMcpServers": {
+						"valid": true,
+						"executionTime": 40,
+						"registered": true,
+						"accessible": true
+					},
+					"cline.validateConfig": {
+						"valid": true,
+						"executionTime": 5,
+						"registered": true,
+						"accessible": true
+					},
+					"cline.exportLogs": {
+						"valid": true,
+						"executionTime": 15,
+						"registered": true,
+						"accessible": true
+					},
+					"cline.clearCache": {
+						"valid": true,
+						"executionTime": 22,
+						"registered": true,
+						"accessible": true
+					},
+					"cline.restartExtension": {
+						"valid": true,
+						"executionTime": 12,
+						"registered": true,
+						"accessible": true
+					},
+					"cline.showHelp": {
+						"valid": true,
+						"executionTime": 91,
+						"registered": true,
+						"accessible": true
+					},
+					"cline.reportIssue": {
+						"valid": true,
+						"executionTime": 94,
+						"registered": true,
+						"accessible": true
+					},
+					"cline.checkUpdates": {
+						"valid": true,
+						"executionTime": 28,
+						"registered": true,
+						"accessible": true
+					}
+				}
+			}
+		},
+		"mcp_integration": {
+			"duration": 0,
+			"success": false,
+			"result": {
+				"totalServers": 5,
+				"connectedServers": 4,
+				"failedServers": 1,
+				"serverDetails": {
+					"eslint-code-quality": {
+						"connected": true,
+						"responseTime": 152,
+						"toolCount": 1,
+						"type": "stdio",
+						"port": null,
+						"status": "active"
+					},
+					"prettier-formatter": {
+						"connected": true,
+						"responseTime": 205,
+						"toolCount": 3,
+						"type": "stdio",
+						"port": null,
+						"status": "active"
+					},
+					"pnpm-package-manager": {
+						"connected": false,
+						"responseTime": 161,
+						"toolCount": 4,
+						"type": "stdio",
+						"port": null,
+						"status": "failed"
+					},
+					"github.com/github/github-mcp-server": {
+						"connected": true,
+						"responseTime": 77,
+						"toolCount": 4,
+						"type": "docker",
+						"port": null,
+						"status": "active"
+					},
+					"github.com/modelcontextprotocol/servers/tree/main/src/postgres": {
+						"connected": true,
+						"responseTime": 57,
+						"toolCount": 9,
+						"type": "tcp",
+						"port": 5432,
+						"status": "active"
+					}
+				}
+			}
+		},
+		"conversation_interface": {
+			"duration": 0,
+			"success": true,
+			"result": {
+				"totalFeatures": 9,
+				"workingFeatures": 9,
+				"brokenFeatures": 0,
+				"featureDetails": {
+					"messageInput": {
+						"working": true,
+						"loadTime": 269,
+						"responsive": true,
+						"accessible": true
+					},
+					"messageHistory": {
+						"working": true,
+						"loadTime": 523,
+						"responsive": true,
+						"accessible": true
+					},
+					"fileAttachment": {
+						"working": true,
+						"loadTime": 269,
+						"responsive": true,
+						"accessible": true
+					},
+					"codeBlocks": {
+						"working": true,
+						"loadTime": 156,
+						"responsive": true,
+						"accessible": true
+					},
+					"imageDisplay": {
+						"working": true,
+						"loadTime": 185,
+						"responsive": true,
+						"accessible": true
+					},
+					"scrolling": {
+						"working": true,
+						"loadTime": 406,
+						"responsive": true,
+						"accessible": true
+					},
+					"messageSearch": {
+						"working": true,
+						"loadTime": 353,
+						"responsive": true,
+						"accessible": true
+					},
+					"exportChat": {
+						"working": true,
+						"loadTime": 186,
+						"responsive": true,
+						"accessible": true
+					},
+					"clearHistory": {
+						"working": true,
+						"loadTime": 255,
+						"responsive": true,
+						"accessible": true
+					}
+				}
+			}
+		},
+		"keyboard_shortcuts": {
+			"duration": 0,
+			"success": true,
+			"result": {
+				"totalShortcuts": 8,
+				"workingShortcuts": 8,
+				"brokenShortcuts": 0,
+				"shortcutDetails": {
+					"Ctrl+Shift+P": {
+						"working": true,
+						"action": "openCommandPalette",
+						"responseTime": 21,
+						"registered": true
+					},
+					"Ctrl+K Ctrl+C": {
+						"working": true,
+						"action": "clearChat",
+						"responseTime": 30,
+						"registered": true
+					},
+					"Ctrl+K Ctrl+E": {
+						"working": true,
+						"action": "exportChat",
+						"responseTime": 43,
+						"registered": true
+					},
+					"Ctrl+K Ctrl+I": {
+						"working": true,
+						"action": "importChat",
+						"responseTime": 41,
+						"registered": true
+					},
+					"Ctrl+K Ctrl+S": {
+						"working": true,
+						"action": "openSettings",
+						"responseTime": 53,
+						"registered": true
+					},
+					"Ctrl+K Ctrl+H": {
+						"working": true,
+						"action": "showHelp",
+						"responseTime": 14,
+						"registered": true
+					},
+					"Escape": {
+						"working": true,
+						"action": "closeDialog",
+						"responseTime": 50,
+						"registered": true
+					},
+					"Enter": {
+						"working": true,
+						"action": "sendMessage",
+						"responseTime": 24,
+						"registered": true
+					}
+				}
+			}
+		},
+		"context_menus": {
+			"duration": 0,
+			"success": true,
+			"result": {
+				"totalMenus": 7,
+				"workingMenus": 7,
+				"brokenMenus": 0,
+				"menuDetails": {
+					"fileExplorer": {
+						"working": true,
+						"itemCount": 8,
+						"loadTime": 44,
+						"accessible": true
+					},
+					"editor": {
+						"working": true,
+						"itemCount": 9,
+						"loadTime": 118,
+						"accessible": true
+					},
+					"chatMessage": {
+						"working": true,
+						"itemCount": 3,
+						"loadTime": 39,
+						"accessible": true
+					},
+					"codeBlock": {
+						"working": true,
+						"itemCount": 10,
+						"loadTime": 43,
+						"accessible": true
+					},
+					"imageAttachment": {
+						"working": true,
+						"itemCount": 5,
+						"loadTime": 40,
+						"accessible": true
+					},
+					"linkPreview": {
+						"working": true,
+						"itemCount": 4,
+						"loadTime": 61,
+						"accessible": true
+					},
+					"errorMessage": {
+						"working": true,
+						"itemCount": 4,
+						"loadTime": 101,
+						"accessible": true
+					}
+				}
+			}
+		},
+		"error_handling": {
+			"duration": 0,
+			"success": false,
+			"result": {
+				"totalScenarios": 8,
+				"handledErrors": 7,
+				"unhandledErrors": 1,
+				"errorDetails": {
+					"networkTimeout": {
+						"handled": true,
+						"recoveryTime": 1079,
+						"gracefulDegradation": true,
+						"userNotified": true
+					},
+					"invalidCommand": {
+						"handled": true,
+						"recoveryTime": 313,
+						"gracefulDegradation": true,
+						"userNotified": true
+					},
+					"mcpServerDown": {
+						"handled": true,
+						"recoveryTime": 952,
+						"gracefulDegradation": true,
+						"userNotified": true
+					},
+					"fileNotFound": {
+						"handled": false,
+						"recoveryTime": 138,
+						"gracefulDegradation": true,
+						"userNotified": false
+					},
+					"permissionDenied": {
+						"handled": true,
+						"recoveryTime": 372,
+						"gracefulDegradation": true,
+						"userNotified": true
+					},
+					"memoryLimit": {
+						"handled": true,
+						"recoveryTime": 992,
+						"gracefulDegradation": true,
+						"userNotified": true
+					},
+					"syntaxError": {
+						"handled": true,
+						"recoveryTime": 362,
+						"gracefulDegradation": true,
+						"userNotified": true
+					},
+					"authenticationFailed": {
+						"handled": true,
+						"recoveryTime": 211,
+						"gracefulDegradation": false,
+						"userNotified": true
+					}
+				}
+			}
+		},
+		"memory_usage": {
+			"duration": 101,
+			"success": true,
+			"result": {
+				"initial": {
+					"rss": 42762240,
+					"heapTotal": 5783552,
+					"heapUsed": 4353224,
+					"external": 1464603,
+					"arrayBuffers": 10515
+				},
+				"final": {
+					"rss": 42844160,
+					"heapTotal": 5783552,
+					"heapUsed": 4366976,
+					"external": 1464643,
+					"arrayBuffers": 10515
+				},
+				"delta": 13752,
+				"withinTarget": true
+			}
+		}
+	},
+	"summary": {
+		"success": false,
+		"totalTests": 7,
+		"successfulTests": 4,
+		"failedTests": 3,
+		"totalDuration": 108,
+		"errorCount": 0,
+		"performanceScore": 100,
+		"functionalityScore": 57,
+		"recommendations": [
+			"Fix invalid command registrations",
+			"Resolve MCP server connection issues",
+			"Improve error handling and recovery mechanisms"
+		]
+	},
+	"contextMenus": {
+		"totalMenus": 7,
+		"workingMenus": 7,
+		"brokenMenus": 0,
+		"menuDetails": {
+			"fileExplorer": {
+				"working": true,
+				"itemCount": 8,
+				"loadTime": 44,
+				"accessible": true
+			},
+			"editor": {
+				"working": true,
+				"itemCount": 9,
+				"loadTime": 118,
+				"accessible": true
+			},
+			"chatMessage": {
+				"working": true,
+				"itemCount": 3,
+				"loadTime": 39,
+				"accessible": true
+			},
+			"codeBlock": {
+				"working": true,
+				"itemCount": 10,
+				"loadTime": 43,
+				"accessible": true
+			},
+			"imageAttachment": {
+				"working": true,
+				"itemCount": 5,
+				"loadTime": 40,
+				"accessible": true
+			},
+			"linkPreview": {
+				"working": true,
+				"itemCount": 4,
+				"loadTime": 61,
+				"accessible": true
+			},
+			"errorMessage": {
+				"working": true,
+				"itemCount": 4,
+				"loadTime": 101,
+				"accessible": true
+			}
+		}
+	},
+	"memory": {
+		"initial": {
+			"rss": 42762240,
+			"heapTotal": 5783552,
+			"heapUsed": 4353224,
+			"external": 1464603,
+			"arrayBuffers": 10515
+		},
+		"final": {
+			"rss": 42844160,
+			"heapTotal": 5783552,
+			"heapUsed": 4366976,
+			"external": 1464643,
+			"arrayBuffers": 10515
+		},
+		"delta": 13752,
+		"withinTarget": true
+	}
+}

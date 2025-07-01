@@ -1,0 +1,153 @@
+{
+	"timestamp": "2025-07-01T21:07:49.452Z",
+	"phase": "3.2.1",
+	"issue": "#43",
+	"components": {
+		"webview": {
+			"structure": {
+				"hasProviders": true,
+				"hasTranslation": true,
+				"hasQueryClient": true,
+				"hasTooltipProvider": true,
+				"tabCount": 7,
+				"componentCount": 36
+			},
+			"fileSize": 7493,
+			"complexity": 36
+		},
+		"interactive": {
+			"tabs": 7,
+			"switchTabFunction": true,
+			"messageHandling": true,
+			"humanRelayDialog": true,
+			"nonInteractiveClick": true
+		},
+		"stateManagement": {
+			"hasProvider": true,
+			"hasHook": true,
+			"stateProperties": 11,
+			"effectCount": 3
+		},
+		"theme": {
+			"cssVariables": true,
+			"darkModeSupport": true,
+			"lightModeSupport": true,
+			"themeProvider": true
+		},
+		"errorHandling": {
+			"tryBlocks": 25,
+			"errorBoundaries": 0,
+			"errorStates": 673,
+			"fallbackComponents": 14
+		}
+	},
+	"performance": {
+		"webview_rendering": {
+			"duration": 0,
+			"memoryDelta": 20024,
+			"success": true,
+			"result": {
+				"hasProviders": true,
+				"hasTranslation": true,
+				"hasQueryClient": true,
+				"hasTooltipProvider": true,
+				"tabCount": 7,
+				"componentCount": 36
+			}
+		},
+		"interactive_elements": {
+			"duration": 0,
+			"memoryDelta": 2744,
+			"success": true,
+			"result": {
+				"tabs": 7,
+				"switchTabFunction": true,
+				"messageHandling": true,
+				"humanRelayDialog": true,
+				"nonInteractiveClick": true
+			}
+		},
+		"state_management": {
+			"duration": 0,
+			"memoryDelta": 29616,
+			"success": true,
+			"result": {
+				"hasProvider": true,
+				"hasHook": true,
+				"stateProperties": 11,
+				"effectCount": 3
+			}
+		},
+		"theme_support": {
+			"duration": 12,
+			"memoryDelta": 839640,
+			"success": true,
+			"result": {
+				"cssVariables": true,
+				"darkModeSupport": true,
+				"lightModeSupport": true,
+				"themeProvider": true
+			}
+		},
+		"accessibility": {
+			"duration": 8,
+			"memoryDelta": -938224,
+			"success": true,
+			"result": {
+				"ariaLabels": 40,
+				"semanticElements": 19,
+				"keyboardNavigation": true,
+				"focusManagement": true,
+				"colorContrast": false
+			}
+		},
+		"error_handling": {
+			"duration": 7,
+			"memoryDelta": 69440,
+			"success": true,
+			"result": {
+				"tryBlocks": 25,
+				"errorBoundaries": 0,
+				"errorStates": 673,
+				"fallbackComponents": 14
+			}
+		},
+		"memory": {
+			"initial": {
+				"rss": 52330496,
+				"heapTotal": 7356416,
+				"heapUsed": 4349648,
+				"external": 1516674,
+				"arrayBuffers": 10515
+			},
+			"final": {
+				"rss": 52346880,
+				"heapTotal": 7356416,
+				"heapUsed": 4359320,
+				"external": 1516674,
+				"arrayBuffers": 10515
+			},
+			"delta": 9672,
+			"withinTarget": true
+		}
+	},
+	"accessibility": {
+		"ariaLabels": 40,
+		"semanticElements": 19,
+		"keyboardNavigation": true,
+		"focusManagement": true,
+		"colorContrast": false
+	},
+	"errors": [],
+	"summary": {
+		"success": true,
+		"totalTests": 7,
+		"successfulTests": 6,
+		"failedTests": 1,
+		"totalDuration": 1033,
+		"errorCount": 0,
+		"performanceScore": 50,
+		"accessibilityScore": 100,
+		"recommendations": ["Add error boundaries for better error handling"]
+	}
+}
