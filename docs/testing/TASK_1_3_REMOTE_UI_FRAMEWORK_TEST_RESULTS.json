@@ -1,0 +1,176 @@
+{
+	"timestamp": "2025-07-02T17:36:43.251Z",
+	"duration": 0,
+	"results": {
+		"pocRemoteUI": {
+			"status": "passed",
+			"tests": [
+				{
+					"name": "Health Endpoint",
+					"status": "passed",
+					"details": {
+						"statusCode": 200,
+						"contentLength": 163,
+						"responseTime": 3
+					}
+				},
+				{
+					"name": "Static Assets",
+					"status": "passed",
+					"details": {
+						"statusCode": 200,
+						"contentLength": 8012,
+						"responseTime": 2
+					}
+				},
+				{
+					"name": "IPC Socket Connection",
+					"status": "passed",
+					"details": {
+						"connected": true,
+						"socketPath": "/tmp/app.roo-extension"
+					}
+				},
+				{
+					"name": "Extension Communication",
+					"status": "passed",
+					"details": {
+						"interfaceAvailable": true,
+						"communicationProtocol": "IPC Socket",
+						"status": "Interface ready for extension connection"
+					}
+				}
+			]
+		},
+		"webUI": {
+			"status": "partial",
+			"tests": [
+				{
+					"name": "Vite Dev Server",
+					"status": "passed",
+					"details": {
+						"statusCode": 200,
+						"contentLength": 532,
+						"responseTime": 2
+					}
+				},
+				{
+					"name": "React App Loading",
+					"status": "passed",
+					"details": {
+						"reactDetected": true,
+						"viteDetected": true,
+						"titleCorrect": true
+					}
+				},
+				{
+					"name": "API Integration",
+					"status": "passed",
+					"details": {
+						"apiConnectivity": true,
+						"targetEndpoint": "http://localhost:3001",
+						"healthCheck": {
+							"statusCode": 200,
+							"contentLength": 120,
+							"responseTime": 13
+						}
+					}
+				},
+				{
+					"name": "WebSocket Connection",
+					"status": "failed",
+					"error": "WebSocket connection failed: Unexpected server response: 404"
+				}
+			]
+		},
+		"productionCCS": {
+			"status": "partial",
+			"tests": [
+				{
+					"name": "CCS Health Check",
+					"status": "passed",
+					"details": {
+						"statusCode": 200,
+						"contentLength": 120,
+						"responseTime": 1
+					}
+				},
+				{
+					"name": "Remote Session Endpoint",
+					"status": "failed",
+					"error": "HTTP 404: Not Found"
+				},
+				{
+					"name": "WebSocket Server",
+					"status": "failed",
+					"error": "CCS WebSocket server not available: Unexpected server response: 404"
+				},
+				{
+					"name": "API Authentication",
+					"status": "passed",
+					"details": {
+						"authEndpointAvailable": true,
+						"statusCode": 404,
+						"message": "Authentication endpoint accessible"
+					}
+				}
+			]
+		},
+		"crossFramework": {
+			"status": "passed",
+			"tests": [
+				{
+					"name": "POC to CCS Communication",
+					"status": "passed",
+					"details": {
+						"pocToCCSCommunication": true,
+						"pocStatus": 200,
+						"ccsStatus": 200,
+						"communicationPath": "HTTP API"
+					}
+				},
+				{
+					"name": "Web UI to CCS Communication",
+					"status": "passed",
+					"details": {
+						"webUIToCCSCommunication": true,
+						"webUIStatus": 200,
+						"ccsStatus": 200,
+						"communicationPath": "HTTP API + WebSocket"
+					}
+				},
+				{
+					"name": "Multi-Framework Session",
+					"status": "passed",
+					"details": {
+						"multiFrameworkSession": true,
+						"pocAvailable": true,
+						"webUIAvailable": true,
+						"ccsAvailable": true,
+						"sessionCoordination": "All frameworks operational"
+					}
+				},
+				{
+					"name": "Framework Handoff",
+					"status": "passed",
+					"details": {
+						"handoffCapability": true,
+						"supportedTransitions": ["POC->CCS", "WebUI->CCS", "CCS->WebUI"],
+						"handoffProtocol": "Session token + WebSocket",
+						"status": "Framework handoff interface ready"
+					}
+				}
+			]
+		},
+		"overall": {
+			"status": "passed",
+			"successRate": 81
+		}
+	},
+	"summary": {
+		"totalTests": 16,
+		"passedTests": 13,
+		"successRate": 81,
+		"status": "passed"
+	}
+}

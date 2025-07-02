@@ -15,6 +15,7 @@ import { healthRoutes } from './routes/health';
 import { initializeUsersRoutes } from './routes/users';
 import conversationRoutes from './routes/conversations';
 import messageRoutes from './routes/messages';
+import remoteRoutes from './routes/remote';
 
 export class ExpressApp {
   public app: Application;
@@ -175,6 +176,11 @@ export class ExpressApp {
     // Message management routes (TASK-007.2.1.4)
     this.app.use(`${apiV1}`, messageRoutes);
 
+    // Remote UI session routes (Phase 3.3 - Cross-device communication)
+    console.log('Registering remote routes...');
+    this.app.use('/remote', remoteRoutes);
+    console.log('Remote routes registered successfully');
+
     // File sync routes (TASK-007.2.1.4)
     // this.app.use(`${apiV1}/files`, fileRoutes);
 
@@ -212,6 +218,15 @@ export class ExpressApp {
               'POST /auth/change-password',
             ],
           },
+          remote: {
+            base: '/remote',
+            endpoints: [
+              'GET /remote/:sessionId',
+              'GET /remote/:sessionId/status',
+              'POST /remote/:sessionId/connect',
+              'POST /remote/:sessionId/disconnect',
+            ],
+          },
           // Additional endpoints will be documented as they're implemented
         },
         documentation: 'https://github.com/tim-gameplan/Roo-Code/docs',
@@ -220,11 +235,15 @@ export class ExpressApp {
 
     // Catch-all route for undefined endpoints
     this.app.all('*', (req: Request, res: Response) => {
+      const requestId = (req as any).requestId || 'unknown';
+      const timestamp = new Date().toISOString();
+
       logger.warn('Route not found', {
         method: req.method,
         url: req.url,
         ip: req.ip,
         userAgent: req.get('User-Agent'),
+        requestId,
       });
 
       res.status(404).json({
@@ -238,7 +257,10 @@ export class ExpressApp {
           'GET /health/metrics',
           'GET /api',
           `${apiV1}/auth/*`,
+          '/remote/:sessionId',
         ],
+        timestamp,
+        requestId,
       });
     });
   }
