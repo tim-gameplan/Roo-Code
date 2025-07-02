@@ -54,8 +54,8 @@ class RemoteUIFrameworkTester {
 		console.log("\n📱 Testing POC Remote UI Framework...")
 
 		const tests = [
-			{ name: "Health Endpoint", test: () => this.testHTTPEndpoint("http://localhost:3000/health") },
-			{ name: "Static Assets", test: () => this.testHTTPEndpoint("http://localhost:3000/") },
+			{ name: "Health Endpoint", test: () => this.testHTTPEndpoint("http://localhost:8081/health") },
+			{ name: "Static Assets", test: () => this.testHTTPEndpoint("http://localhost:8081/") },
 			{ name: "IPC Socket Connection", test: () => this.testIPCConnection() },
 			{ name: "Extension Communication", test: () => this.testExtensionCommunication() },
 		]
@@ -401,7 +401,7 @@ class RemoteUIFrameworkTester {
 	async testPOCToCCS() {
 		// Test communication between POC and CCS
 		try {
-			const pocHealth = await this.testHTTPEndpoint("http://localhost:3000/health")
+			const pocHealth = await this.testHTTPEndpoint("http://localhost:8081/health")
 			const ccsHealth = await this.testHTTPEndpoint("http://localhost:3001/health")
 
 			return {
@@ -435,7 +435,7 @@ class RemoteUIFrameworkTester {
 	async testMultiFrameworkSession() {
 		// Test multi-framework session management
 		try {
-			const pocHealth = await this.testHTTPEndpoint("http://localhost:3000/health")
+			const pocHealth = await this.testHTTPEndpoint("http://localhost:8081/health")
 			const webUIHealth = await this.testHTTPEndpoint("http://localhost:5173")
 			const ccsHealth = await this.testHTTPEndpoint("http://localhost:3001/health")
 
