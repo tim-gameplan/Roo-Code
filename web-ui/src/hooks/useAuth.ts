@@ -7,7 +7,7 @@ interface UseAuthReturn {
 	isAuthenticated: boolean
 	isLoading: boolean
 	error: string | null
-	login: (username: string, password?: string) => Promise<void>
+	login: (email: string, deviceName?: string) => Promise<void>
 	logout: () => Promise<void>
 	refreshUser: () => Promise<void>
 }
@@ -19,12 +19,12 @@ export function useAuth(): UseAuthReturn {
 
 	const isAuthenticated = !!user
 
-	const login = async (username: string, password?: string) => {
+	const login = async (email: string, deviceName?: string) => {
 		try {
 			setIsLoading(true)
 			setError(null)
 
-			const response = await apiClient.login(username, password)
+			const response = await apiClient.login(email, deviceName)
 
 			if (response.success && response.data?.user) {
 				setUser(response.data.user)

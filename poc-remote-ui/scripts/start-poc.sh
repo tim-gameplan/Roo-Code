@@ -52,9 +52,9 @@ echo ""
 
 # Start the server
 echo "🚀 Starting Central Communication Server..."
-echo "📱 Web interface will be available at: http://localhost:3000"
-echo "📊 Server status: http://localhost:3000/status"
-echo "🏥 Health check: http://localhost:3000/health"
+echo "📱 Web interface will be available at: http://localhost:8081"
+echo "📊 Server status: http://localhost:8081/status"
+echo "🏥 Health check: http://localhost:8081/health"
 echo ""
 echo "Press Ctrl+C to stop the server"
 echo ""

@@ -6,21 +6,21 @@ interface LoginProps {
 }
 
 export function Login({ onLoginSuccess }: LoginProps) {
-	const [username, setUsername] = useState("")
-	const [password, setPassword] = useState("")
+	const [email, setEmail] = useState("")
+	const [deviceName, setDeviceName] = useState("Web Browser")
 	const [isLoading, setIsLoading] = useState(false)
 	const { login, error } = useAuth()
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault()
 
-		if (!username.trim()) {
+		if (!email.trim()) {
 			return
 		}
 
 		try {
 			setIsLoading(true)
-			await login(username, password || undefined)
+			await login(email, deviceName)
 			onLoginSuccess?.()
 		} catch (err) {
 			// Error is handled by the useAuth hook
@@ -37,33 +37,33 @@ export function Login({ onLoginSuccess }: LoginProps) {
 
 				<form onSubmit={handleSubmit} className="login-form">
 					<div className="form-group">
-						<label htmlFor="username">Username / Device ID</label>
+						<label htmlFor="email">Email</label>
 						<input
-							id="username"
-							type="text"
-							value={username}
-							onChange={(e) => setUsername(e.target.value)}
-							placeholder="Enter your username or device ID"
+							id="email"
+							type="email"
+							value={email}
+							onChange={(e) => setEmail(e.target.value)}
+							placeholder="Enter your email address"
 							required
 							disabled={isLoading}
 						/>
 					</div>
 
 					<div className="form-group">
-						<label htmlFor="password">Password (optional)</label>
+						<label htmlFor="deviceName">Device Name</label>
 						<input
-							id="password"
-							type="password"
-							value={password}
-							onChange={(e) => setPassword(e.target.value)}
-							placeholder="Enter password if required"
+							id="deviceName"
+							type="text"
+							value={deviceName}
+							onChange={(e) => setDeviceName(e.target.value)}
+							placeholder="Web Browser"
 							disabled={isLoading}
 						/>
 					</div>
 
 					{error && <div className="error-message">{error}</div>}
 
-					<button type="submit" className="login-button" disabled={isLoading || !username.trim()}>
+					<button type="submit" className="login-button" disabled={isLoading || !email.trim()}>
 						{isLoading ? "Connecting..." : "Connect"}
 					</button>
 				</form>
@@ -71,8 +71,8 @@ export function Login({ onLoginSuccess }: LoginProps) {
 				<div className="login-info">
 					<h3>How to connect:</h3>
 					<ol>
-						<li>Enter your username or device ID</li>
-						<li>Add a password if your setup requires it</li>
+						<li>Enter your email address</li>
+						<li>Optionally customize your device name</li>
 						<li>Click Connect to establish a remote session</li>
 					</ol>
 

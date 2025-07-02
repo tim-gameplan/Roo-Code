@@ -1,6 +1,6 @@
 import { ApiResponse } from "../types"
 
-const API_BASE_URL = "http://localhost:3001"
+const API_BASE_URL = "http://localhost:3000"
 
 class ApiClient {
 	private baseURL: string
@@ -63,7 +63,7 @@ class ApiClient {
 
 	// Health check
 	async checkHealth() {
-		return this.get("/api/health")
+		return this.get("/health")
 	}
 
 	// Device management
@@ -76,16 +76,20 @@ class ApiClient {
 	}
 
 	// Authentication
-	async login(username: string, password?: string) {
-		return this.post("/api/auth/login", { username, password })
+	async login(email: string, deviceName: string = "Web Browser", deviceType: string = "web") {
+		return this.post("/api/v1/auth/login", {
+			email,
+			device_name: deviceName,
+			device_type: deviceType,
+		})
 	}
 
 	async logout() {
-		return this.post("/api/auth/logout")
+		return this.post("/api/v1/auth/logout")
 	}
 
 	async getCurrentUser() {
-		return this.get("/api/auth/me")
+		return this.get("/api/v1/auth/me")
 	}
 
 	// Remote sessions
