@@ -93,10 +93,32 @@ function sendMessageToRoo(messageText, res) {
 	try {
 		console.log("📤 Sending message to Roo extension:", messageText)
 
-		ipc.of["roo-extension"].emit("remote-message", {
-			text: messageText,
-			timestamp: new Date().toISOString(),
-		})
+		// Use the proper IPC protocol format that the extension expects
+		const taskCommand = {
+			type: "TaskCommand",
+			origin: "client",
+			clientId: "roo-remote-poc",
+			data: {
+				commandName: "StartNewTask",
+				data: {
+					configuration: {
+						// Minimal configuration to ensure the task starts
+						autoApprovalEnabled: false,
+						alwaysAllowReadOnly: true,
+						alwaysAllowWrite: false,
+						alwaysAllowExecute: false,
+						allowedCommands: [],
+					},
+					text: messageText,
+					images: [],
+					newTab: false,
+				},
+			},
+		}
+
+		console.log("📤 Sending TaskCommand:", JSON.stringify(taskCommand, null, 2))
+		// Send as raw message data, not wrapped in another object
+		ipc.of["roo-extension"].emit("message", taskCommand)
 
 		if (res) {
 			res.json({
