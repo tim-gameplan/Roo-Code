@@ -1,0 +1,319 @@
+/* VSCode Theme Variables for Web Environment */
+:root {
+	/* VSCode Dark Theme - Primary Colors */
+	--vscode-editor-background: #1e1e1e;
+	--vscode-editor-foreground: #d4d4d4;
+	--vscode-sideBar-background: #252526;
+	--vscode-activityBar-background: #333333;
+	--vscode-panel-background: #1e1e1e;
+
+	/* Input Controls */
+	--vscode-input-background: #3c3c3c;
+	--vscode-input-foreground: #cccccc;
+	--vscode-input-border: #3c3c3c;
+	--vscode-inputOption-activeBorder: #007acc;
+	--vscode-inputValidation-infoBorder: #007acc;
+	--vscode-inputValidation-warningBorder: #ffcc02;
+	--vscode-inputValidation-errorBorder: #f48771;
+
+	/* Button Controls */
+	--vscode-button-background: #0e639c;
+	--vscode-button-foreground: #ffffff;
+	--vscode-button-hoverBackground: #1177bb;
+	--vscode-button-secondaryBackground: #3a3d41;
+	--vscode-button-secondaryForeground: #cccccc;
+	--vscode-button-secondaryHoverBackground: #45494e;
+
+	/* Chat-specific Variables */
+	--vscode-chat-requestBackground: #2d2d30;
+	--vscode-chat-responseBackground: #1e1e1e;
+	--vscode-chat-border: #3c3c3c;
+	--vscode-chat-slashCommandBackground: #34373a;
+	--vscode-chat-slashCommandForeground: #c586c0;
+
+	/* List and Tree Controls */
+	--vscode-list-activeSelectionBackground: #04395e;
+	--vscode-list-activeSelectionForeground: #ffffff;
+	--vscode-list-hoverBackground: #2a2d2e;
+	--vscode-list-focusBackground: #062f3a;
+
+	/* Scrollbar */
+	--vscode-scrollbarSlider-background: rgba(121, 121, 121, 0.4);
+	--vscode-scrollbarSlider-hoverBackground: rgba(100, 100, 100, 0.7);
+	--vscode-scrollbarSlider-activeBackground: rgba(191, 191, 191, 0.4);
+
+	/* Progress Bar */
+	--vscode-progressBar-background: #0e70c0;
+
+	/* Focus Border */
+	--vscode-focusBorder: #007fd4;
+
+	/* Error and Warning Colors */
+	--vscode-errorForeground: #f48771;
+	--vscode-warningForeground: #ffcc02;
+	--vscode-infoForeground: #75beff;
+
+	/* Text Colors */
+	--vscode-descriptionForeground: #cccccc;
+	--vscode-disabledForeground: #656565;
+
+	/* Border Colors */
+	--vscode-contrastBorder: #6fc3df;
+	--vscode-contrastActiveBorder: #f38518;
+
+	/* Badge */
+	--vscode-badge-background: #4d4d4d;
+	--vscode-badge-foreground: #ffffff;
+}
+
+/* Global VSCode Theme Application */
+.vscode-dark-theme {
+	background-color: var(--vscode-editor-background);
+	color: var(--vscode-editor-foreground);
+	font-family:
+		-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Open Sans",
+		"Helvetica Neue", sans-serif;
+	font-size: 13px;
+	line-height: 1.4;
+}
+
+/* Webview UI Component Base Styling */
+.webview-ui-component {
+	color: var(--vscode-editor-foreground);
+	background: var(--vscode-editor-background);
+	border: 1px solid var(--vscode-chat-border);
+	border-radius: 3px;
+}
+
+/* VSCode Input Styling */
+.vscode-input {
+	background-color: var(--vscode-input-background);
+	color: var(--vscode-input-foreground);
+	border: 1px solid var(--vscode-input-border);
+	border-radius: 2px;
+	padding: 4px 8px;
+	font-size: 13px;
+	font-family: inherit;
+	outline: none;
+}
+
+.vscode-input:focus {
+	border-color: var(--vscode-inputOption-activeBorder);
+	box-shadow: 0 0 0 1px var(--vscode-inputOption-activeBorder);
+}
+
+/* VSCode Button Styling */
+.vscode-button {
+	background-color: var(--vscode-button-background);
+	color: var(--vscode-button-foreground);
+	border: none;
+	border-radius: 2px;
+	padding: 6px 14px;
+	font-size: 13px;
+	font-family: inherit;
+	cursor: pointer;
+	outline: none;
+	display: inline-block;
+	text-align: center;
+	text-decoration: none;
+	user-select: none;
+}
+
+.vscode-button:hover {
+	background-color: var(--vscode-button-hoverBackground);
+}
+
+.vscode-button:focus {
+	box-shadow: 0 0 0 1px var(--vscode-focusBorder);
+}
+
+.vscode-button.secondary {
+	background-color: var(--vscode-button-secondaryBackground);
+	color: var(--vscode-button-secondaryForeground);
+}
+
+.vscode-button.secondary:hover {
+	background-color: var(--vscode-button-secondaryHoverBackground);
+}
+
+/* Chat Container Styling */
+.vscode-chat-container {
+	background-color: var(--vscode-editor-background);
+	border: 1px solid var(--vscode-chat-border);
+	border-radius: 6px;
+	overflow: hidden;
+}
+
+.vscode-chat-message {
+	padding: 12px 16px;
+	border-bottom: 1px solid var(--vscode-chat-border);
+}
+
+.vscode-chat-message:last-child {
+	border-bottom: none;
+}
+
+.vscode-chat-message.request {
+	background-color: var(--vscode-chat-requestBackground);
+}
+
+.vscode-chat-message.response {
+	background-color: var(--vscode-chat-responseBackground);
+}
+
+/* Scrollbar Styling */
+.vscode-scrollbar::-webkit-scrollbar {
+	width: 10px;
+	height: 10px;
+}
+
+.vscode-scrollbar::-webkit-scrollbar-corner {
+	background-color: transparent;
+}
+
+.vscode-scrollbar::-webkit-scrollbar-thumb {
+	background-color: var(--vscode-scrollbarSlider-background);
+	border-radius: 5px;
+}
+
+.vscode-scrollbar::-webkit-scrollbar-thumb:hover {
+	background-color: var(--vscode-scrollbarSlider-hoverBackground);
+}
+
+.vscode-scrollbar::-webkit-scrollbar-thumb:active {
+	background-color: var(--vscode-scrollbarSlider-activeBackground);
+}
+
+.vscode-scrollbar::-webkit-scrollbar-track {
+	background-color: transparent;
+}
+
+/* Progress Bar */
+.vscode-progress {
+	width: 100%;
+	height: 2px;
+	background-color: transparent;
+	overflow: hidden;
+}
+
+.vscode-progress-bar {
+	height: 100%;
+	background-color: var(--vscode-progressBar-background);
+	animation: vscode-progress-animation 2s linear infinite;
+}
+
+@keyframes vscode-progress-animation {
+	0% {
+		transform: translateX(-100%);
+	}
+	100% {
+		transform: translateX(100%);
+	}
+}
+
+/* List and Tree Items */
+.vscode-list-item {
+	padding: 4px 8px;
+	cursor: pointer;
+	user-select: none;
+}
+
+.vscode-list-item:hover {
+	background-color: var(--vscode-list-hoverBackground);
+}
+
+.vscode-list-item.selected {
+	background-color: var(--vscode-list-activeSelectionBackground);
+	color: var(--vscode-list-activeSelectionForeground);
+}
+
+.vscode-list-item.focused {
+	background-color: var(--vscode-list-focusBackground);
+	outline: 1px solid var(--vscode-focusBorder);
+	outline-offset: -1px;
+}
+
+/* Badge Styling */
+.vscode-badge {
+	background-color: var(--vscode-badge-background);
+	color: var(--vscode-badge-foreground);
+	border-radius: 11px;
+	padding: 2px 8px;
+	font-size: 11px;
+	font-weight: 600;
+	display: inline-block;
+	min-width: 18px;
+	text-align: center;
+}
+
+/* Error and Status Colors */
+.vscode-error {
+	color: var(--vscode-errorForeground);
+}
+
+.vscode-warning {
+	color: var(--vscode-warningForeground);
+}
+
+.vscode-info {
+	color: var(--vscode-infoForeground);
+}
+
+.vscode-description {
+	color: var(--vscode-descriptionForeground);
+}
+
+.vscode-disabled {
+	color: var(--vscode-disabledForeground);
+}
+
+/* Panel and Container Styling */
+.vscode-panel {
+	background-color: var(--vscode-panel-background);
+	border: 1px solid var(--vscode-chat-border);
+}
+
+.vscode-sidebar {
+	background-color: var(--vscode-sideBar-background);
+}
+
+.vscode-activity-bar {
+	background-color: var(--vscode-activityBar-background);
+}
+
+/* Utility Classes */
+.vscode-hidden {
+	display: none !important;
+}
+
+.vscode-flex {
+	display: flex;
+}
+
+.vscode-flex-column {
+	flex-direction: column;
+}
+
+.vscode-flex-1 {
+	flex: 1;
+}
+
+.vscode-text-center {
+	text-align: center;
+}
+
+.vscode-text-right {
+	text-align: right;
+}
+
+.vscode-font-bold {
+	font-weight: 600;
+}
+
+.vscode-font-light {
+	font-weight: 400;
+}
+
+.vscode-monospace {
+	font-family: "SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, "Courier New", monospace;
+}

@@ -1,6 +1,6 @@
-import { ApiResponse } from "../types"
+// import { ApiResponse } from "../types"
 
-const API_BASE_URL = "http://localhost:3000"
+const API_BASE_URL = "http://localhost:3001"
 
 class ApiClient {
 	private baseURL: string

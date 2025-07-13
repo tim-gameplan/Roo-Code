@@ -95,8 +95,29 @@ export function useAuth(): UseAuthReturn {
 				}
 			}
 
-			// Always try to refresh user from server
-			await refreshUser()
+			// Try to refresh user from server, but don't block if server is unavailable
+			try {
+				setIsLoading(true)
+				setError(null)
+
+				const response = await apiClient.getCurrentUser()
+
+				if (response.success && response.data?.user) {
+					setUser(response.data.user)
+					localStorage.setItem("auth_user", JSON.stringify(response.data.user))
+				} else {
+					// User not authenticated, clear local storage
+					setUser(null)
+					localStorage.removeItem("auth_user")
+				}
+			} catch (err) {
+				console.warn("Backend server not available, proceeding with offline mode:", err)
+				setUser(null)
+				localStorage.removeItem("auth_user")
+				setError(null) // Don't show error for failed refresh
+			} finally {
+				setIsLoading(false)
+			}
 		}
 
 		initializeAuth()
