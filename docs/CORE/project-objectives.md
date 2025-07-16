@@ -1,10 +1,7 @@
-
 We are going to explore this code so that we have an understanding of what it is and what it generally does. Of primary interest to us is to research the feasibility of modifying this AI coding assistant so that it can be run by an AI assistant itself rather than a human. The human would be at a higher level interacting with AI Agents acting as project managers and technical reviewers who tasks jobs and review the results for additional tasking. I am particularly interested in seeing if the UI interface for Roo that is used to communicate with the underlying LLM could be modified so that all communication can be routed through a server so that it would be possible to conduct all communication through another application or handheld device such as a android or ios phone or tablet while the actual application ran on a computer or server.
-
 
 Hide
 I've drafted a plan to address the issue. Please review it and let me know if you have any feedback. If it looks good, I'll get started.
-
 
 Designed an API for AI Agent Interaction.
 
@@ -26,7 +23,6 @@ UI Clients (web, mobile) communicating via WebSockets.
 A new Central Communication Server (e.g., Node.js with WebSockets) to manage client sessions, authentication, and bridge communication.
 The Central Server communicating with the Roo VS Code Extension via the existing IPC mechanism (with new message types). Key considerations include WebSocket for real-time client-server comms, IPC for server-extension comms, clear message formats, authentication, session management, and state synchronization.
 
-
 Developed the Central Communication Server by outlining its structure and key functionalities. This includes:
 
 Choosing a Node.js-based stack (Express, 'ws' for WebSockets, 'node-ipc').
@@ -35,7 +31,6 @@ Detailing the main server setup (server.ts) and configuration (config.ts).
 Highlighting the need for new IPC message types (RemoteUITaskRequest, RemoteUITaskResponse) and careful management of client session IDs for routing messages correctly between WebSocket clients and the Roo extension via the IPC bridge.
 Noting considerations for error handling, security, and development workflow.
 
-
 Modified the Webview UI (webview-ui/) for Server Communication by:
 
 Outlining a socketService.ts to manage WebSocket connections to the Central Communication Server.
@@ -43,7 +38,6 @@ Detailing changes in App.tsx to use socketService for sending and receiving mess
 Describing adaptations to ExtensionStateContext.tsx for state hydration and updates via WebSocket messages.
 Specifying the replacement of vscode.postMessage calls throughout UI components with calls to socketService.sendMessage.
 Emphasizing the need for a well-defined Client-Server WebSocket message API. Noted challenges include state hydration, latency, and error handling in the new distributed setup.
-
 
 Modified the VS Code Extension (src/) for Server Communication by:
 
@@ -54,7 +48,6 @@ Highlighting the creation of a conceptual ClineProvider.getFullStateForRemoteUI(
 Discussing strategies for managing ClineProvider instances for multiple concurrent remote UI sessions (e.g., per-session instantiation or a singleton managing internal sessions).
 Noting the diminished role of the original webviewMessageHandler.ts.
 Specifying the initialization of the new handler in the extension's activation sequence.
-
 
 Addressed Security, Authentication, and State Management by:
 
@@ -69,7 +62,6 @@ Designed state synchronization mechanisms: initial state pull by UI clients via 
 Discussed session state management on CCS and task state management within the Roo Extension.
 Briefly touched on handling concurrency for state modifications.
 
-
 Outlined the Testing and Refinement strategy.
 
 This includes: Testing Strategy:
@@ -82,8 +74,6 @@ Security Testing: Penetration testing for CCS, IPC security review, auth/authz v
 Usability Testing: For the remote UI. Refinement Process:
 Emphasized iterative feedback, bug fixing, performance optimization, security hardening, code refactoring, and documentation updates based on test results.
 Highlighted key refinement areas: AI Agent API robustness, remote UI responsiveness, and reliability of the CCS-Extension bridge. Mentioned relevant testing tools and frameworks.
-
-
 
 Outlined the Documentation strategy.
 
@@ -100,11 +90,7 @@ Emphasized 'documentation as code', review processes, and regular updates.
 Summary
 I've completed the research and planning for AI agent control and server-based UI. This project involved a thorough investigation into the feasibility of modifying your AI coding assistant. The primary goals were: 1. To enable it to be controlled by an AI agent rather than a human directly. 2. To allow its UI to be accessed remotely through a server, decoupling it from the VS Code webview and enabling access from various devices. The work I completed includes: - Detailed exploration of your existing codebase to understand its architecture and identify key components for modification. - Design of an API to allow AI agents to interact with its core functionalities. - Design of a new server-based communication architecture, introducing a Central Communication Server (CCS) to mediate between remote UI clients and the VS Code extension. - Detailed plans for the implementation of the AI Agent API, the CCS, and the necessary modifications to the existing UI and VS Code extension. - Comprehensive strategies for addressing security, authentication, and distributed state management in the new architecture. - A plan for thorough evaluation (unit, integration, E2E, performance, security) and iterative refinement. - A documentation plan covering all aspects of the redesigned system for various audiences. My conclusion is that the proposed modifications are feasible. This represents the completion of the research and planning phase, providing a comprehensive roadmap for the subsequent development effort.
 
-
-
 What is the best way to take this information and develop a full plan that would lead towards a full software requirements document for these new features?
-
-
 
 That's an excellent question! We've laid a strong foundation with this research and planning. To develop a full Software Requirements Specification (SRS) for these new features, we can build upon the detailed steps and designs we've just completed.
 
@@ -150,7 +136,6 @@ Use Case 1: AI Agent Submits a Coding Task. (Actor: AI Agent, System: Roo Extens
 Use Case 2: User Interacts with Roo via Remote Web UI. (Actor: Human User, System: Remote UI, CCS, Roo Extension)
 Use Case 3: AI Agent Reviews Task Output.
 
-
 Data Requirements: Define the structure of key data objects being passed around (e.g., task details, user session information, configuration settings). Our message type definitions are a good start.
 
 System Architecture: The diagrams and architectural descriptions from our plan (especially Step 3) would form the basis of this section in the SRS.
@@ -167,9 +152,7 @@ Start drafting an SRS, focusing on a specific component (like the AI Agent API o
 Create a new, detailed plan specifically for generating the complete SRS document based on our previous work.
 Or, if you have other instructions, please let me know!
 
-
 Let's define the main features and then for each one we will develop the SRS and implementation plans to start assigning tasks towards our new and exciting capability.
-
 
 That's a great approach! It makes a lot of sense to define the main features stemming from our initial plan and then detail out the SRS and implementation for each one. This will give us a clear, modular way to assign tasks and build towards the new capabilities.
 
@@ -186,9 +169,7 @@ Description: Enable users to interact with Roo through a user interface that is 
 Key components from our plan involved: Server-Based UI Communication Architecture Design (Step 3), Central Communication Server Development (Step 4), Webview UI Modification for Server Communication (Step 5), Roo Extension Modification for Server Communication (Step 6), and relevant parts of Security, Testing, and Documentation (Steps 7, 8, 9).
 Do these two main features align with what you have in mind? Once we confirm these (or refine them), we can pick one to start developing the detailed SRS and implementation plan for it.
 
-
 Please let me know if these two main features (AI Agent Control of Roo, and Remote UI Access for Roo) correctly capture what you'd like to focus on. Once you confirm or refine them, we can choose one and dive into creating its detailed SRS and implementation plan.
-
 
 Those are correct. Please proceed
 
@@ -201,7 +182,6 @@ Now, which of these two features would you like me to tackle first for developin
 Understood. We'll focus on Feature 2: Remote UI Access for Roo first.
 
 I'll now create a new plan specifically for developing the Software Requirements Specification (SRS) and implementation details for this feature. This new plan will draw heavily from the relevant sections of our previous overall plan (especially Steps 3, 4, 5, 6, and parts of 7, 8, 9).
-
 
 Defined and finalized the Overall System Architecture for Remote UI Access.
 
@@ -224,11 +204,9 @@ Usability (Remote UI): Learnability, efficiency, feedback, accessibility.
 Maintainability: Code quality, modularity, testability, configurability, documentation.
 Scalability: CCS horizontal scalability readiness, Roo Extension session scalability. Quantifiable metrics (X, Y, Z, etc.) are included as placeholders to be defined specifically later.
 
-
 Defined External Interface Requirements for the Remote UI Access feature.
 
 This includes: 1. UI Client <-> CCS WebSocket API: - Protocol (WSS), JSON message format (type, payload). - Authentication via JWT in initial handshake/message. - Example client-to-server messages (SUBMIT_PROMPT, REQUEST_INITIAL_STATE, etc.). - Example server-to-client messages (TASK_OUTPUT_CHUNK, TASK_STATUS_UPDATE, STATE_UPDATE, ERROR_MESSAGE, etc.). 2. CCS <-> Roo VS Code Extension IPC API: - Protocol (node-ipc), use of IpcMessage structure from @roo-code/types. - Use of clientId for routing UI client sessions. - Example CCS-to-Roo messages (RemoteUITaskRequest, RemoteUIStateRequest, etc.). - Example Roo-to-CCS messages (RemoteUITaskResponse, RemoteUIStateUpdate). - Optional handshake/authentication for IPC. 3. General Considerations: API versioning, standardized error reporting, and design for extensibility.
-
 
 Detailed Data Requirements for the Remote UI Access feature.
 
@@ -263,7 +241,6 @@ I've finished the initial planning for the 'Remote UI Access for Roo' feature. W
 
 Next, I'll move on to developing the implementation plan, starting with the 'Detailed Design for Central Communication Server (CCS)'.
 
-
 Currently, I'm working on Step 9: Detailed Design for Central Communication Server (CCS). I'm focused on fleshing out the specifics of the CCS based on our SRS and previous discussions. This includes finalizing its technology stack, module structure, key functions, data handling, error strategies, and logging.
 
 Once this detailed design for the CCS is complete, our next step will be Step 10: Detailed Design for UI Client Modifications/Development.
@@ -282,7 +259,6 @@ Significant refactoring required for ClineProvider.ts and Task.ts to support hea
 Initialization of these new components in the extension's activation sequence.
 Considerations for global vs. session-specific state management and error handling.
 Next, I will develop the task breakdown and sequencing.
-
 
 I've completed the task breakdown and sequencing.
 
@@ -320,7 +296,6 @@ Test Environment and Data: Considerations for dev and staging environments, and 
 Test Reporting and Defect Tracking: Processes for managing test outcomes.
 This provides a comprehensive approach to ensure the quality and robustness of the Remote UI Access feature. Next, I will outline the deployment and operational plan for CCS.
 
-
 I've completed outlining the Deployment and Operational Plan for CCS.
 
 This involved detailing:
@@ -332,12 +307,12 @@ Maintenance and Updates: Procedures for application updates, dependency manageme
 Backup and Recovery: Basic plans for configuration, database (if applicable), and application code.
 This outlines how to get the CCS running and keep it operational. The final step is to compile the Implementation Plan Document.
 
-
 I've finalized the SRS and Implementation Plan for Feature 2: Remote UI Access.
 
 This marks the completion of the planning process for Feature 2: Remote UI Access for Roo. This comprehensive effort included:
 
 Phase 1: SRS Development
+
 - Definition of Overall System Architecture.
 - Specification of Functional Requirements for UI Clients, CCS, and Roo Extension.
 - Specification of Non-Functional Requirements (Performance, Security, Reliability, Usability, Maintainability, Scalability).
@@ -347,6 +322,7 @@ Phase 1: SRS Development
 - Compilation and Review of the SRS document structure.
 
 Phase 2: Implementation Plan Development
+
 - Detailed Design for Central Communication Server (CCS), including a foundational FastAPI/SQLAlchemy codebase.
 - Detailed Design for UI Client Modifications (adapting webview-ui for WebSocket communication).
 - Detailed Design for Roo VS Code Extension Modifications (IPC handling, session management, ClineProvider adaptations).
@@ -365,13 +341,13 @@ This document outlines the detailed design for the Central Communication Server 
 
 ## 2. Technology Stack
 
-*   **Programming Language:** Python 3.9+
-*   **Web Framework:** FastAPI
-*   **Asynchronous Server Gateway Interface (ASGI):** Uvicorn
-*   **Real-time Communication Protocol:** WebSockets
-*   **Database:** PostgreSQL
-*   **Authentication:** JSON Web Tokens (JWT)
-*   **Caching (Optional, for future scalability):** Redis (e.g., for presence status, session management)
+- **Programming Language:** Python 3.9+
+- **Web Framework:** FastAPI
+- **Asynchronous Server Gateway Interface (ASGI):** Uvicorn
+- **Real-time Communication Protocol:** WebSockets
+- **Database:** PostgreSQL
+- **Authentication:** JSON Web Tokens (JWT)
+- **Caching (Optional, for future scalability):** Redis (e.g., for presence status, session management)
 
 ## 3. System Architecture Overview
 
@@ -395,174 +371,175 @@ The CCS will expose WebSocket endpoints for real-time communication and HTTP end
 
 The CCS will be organized into the following primary modules:
 
-*   **`main.py`**: Entry point of the application. Initializes FastAPI app, database connections, and routes.
-*   **`auth/`**: Handles user authentication and JWT management.
-    *   `auth_service.py`: Logic for user registration, login, password hashing, JWT generation and validation.
-    *   `auth_routes.py`: HTTP API endpoints for `/register`, `/login`.
-*   **`users/`**: Manages user profiles and presence.
-    *   `user_models.py`: Pydantic models for user data.
-    *   `user_service.py`: Logic for fetching user details, updating profiles.
-    *   `presence_service.py`: Manages user online/offline status and broadcasts updates.
-*   **`messaging/`**: Handles real-time message routing and persistence.
-    *   `connection_manager.py`: Manages active WebSocket connections. Stores connections per user or per group.
-    *   `message_router.py`: Routes incoming messages to appropriate recipients (one-to-one, group).
-    *   `message_service.py`: Handles storage and retrieval of messages from the database.
-    *   `websocket_routes.py`: WebSocket endpoints for establishing connections and message exchange.
-*   **`database/`**: Manages database interactions.
-    *   `db_config.py`: Database connection settings.
-    *   `db_models.py`: SQLAlchemy ORM models for database tables.
-    *   `crud.py`: Create, Read, Update, Delete operations for database models.
-*   **`core/`**: Core utilities and configurations.
-    *   `config.py`: Application settings (e.g., JWT secret, database URL).
-    *   `security.py`: Password hashing utilities.
-*   **`tests/`**: Unit and integration tests for all modules.
+- **`main.py`**: Entry point of the application. Initializes FastAPI app, database connections, and routes.
+- **`auth/`**: Handles user authentication and JWT management.
+    - `auth_service.py`: Logic for user registration, login, password hashing, JWT generation and validation.
+    - `auth_routes.py`: HTTP API endpoints for `/register`, `/login`.
+- **`users/`**: Manages user profiles and presence.
+    - `user_models.py`: Pydantic models for user data.
+    - `user_service.py`: Logic for fetching user details, updating profiles.
+    - `presence_service.py`: Manages user online/offline status and broadcasts updates.
+- **`messaging/`**: Handles real-time message routing and persistence.
+    - `connection_manager.py`: Manages active WebSocket connections. Stores connections per user or per group.
+    - `message_router.py`: Routes incoming messages to appropriate recipients (one-to-one, group).
+    - `message_service.py`: Handles storage and retrieval of messages from the database.
+    - `websocket_routes.py`: WebSocket endpoints for establishing connections and message exchange.
+- **`database/`**: Manages database interactions.
+    - `db_config.py`: Database connection settings.
+    - `db_models.py`: SQLAlchemy ORM models for database tables.
+    - `crud.py`: Create, Read, Update, Delete operations for database models.
+- **`core/`**: Core utilities and configurations.
+    - `config.py`: Application settings (e.g., JWT secret, database URL).
+    - `security.py`: Password hashing utilities.
+- **`tests/`**: Unit and integration tests for all modules.
 
 ## 5. Key Classes and Functions
 
 ### 5.1. `auth/auth_service.py`
 
-*   `class AuthService`:
-    *   `async def register_user(user_data: UserCreateSchema) -> UserSchema`: Registers a new user. Hashes password. Stores in DB.
-    *   `async def authenticate_user(username: str, password: str) -> Optional[UserSchema]`: Authenticates a user.
-    *   `def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str`: Creates a JWT.
-    *   `async def get_current_user(token: str = Depends(oauth2_scheme)) -> UserSchema`: Decodes JWT and retrieves user.
+- `class AuthService`:
+    - `async def register_user(user_data: UserCreateSchema) -> UserSchema`: Registers a new user. Hashes password. Stores in DB.
+    - `async def authenticate_user(username: str, password: str) -> Optional[UserSchema]`: Authenticates a user.
+    - `def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str`: Creates a JWT.
+    - `async def get_current_user(token: str = Depends(oauth2_scheme)) -> UserSchema`: Decodes JWT and retrieves user.
 
 ### 5.2. `users/presence_service.py`
 
-*   `class PresenceService`:
-    *   `active_users: set[str] = set()`: Stores user IDs of currently online users.
-    *   `async def user_connected(user_id: str)`: Marks user as online, broadcasts presence.
-    *   `async def user_disconnected(user_id: str)`: Marks user as offline, broadcasts presence.
-    *   `async def broadcast_presence_update(user_id: str, status: str)`
+- `class PresenceService`:
+    - `active_users: set[str] = set()`: Stores user IDs of currently online users.
+    - `async def user_connected(user_id: str)`: Marks user as online, broadcasts presence.
+    - `async def user_disconnected(user_id: str)`: Marks user as offline, broadcasts presence.
+    - `async def broadcast_presence_update(user_id: str, status: str)`
 
 ### 5.3. `messaging/connection_manager.py`
 
-*   `class ConnectionManager`:
-    *   `active_connections: dict[str, WebSocket] = {}`: Maps user_id to WebSocket connection.
-    *   `async def connect(user_id: str, websocket: WebSocket)`: Accepts and stores a new connection.
-    *   `def disconnect(user_id: str)`: Removes a connection.
-    *   `async def send_personal_message(message: str, user_id: str)`
-    *   `async def broadcast(message: str)`: Sends a message to all connected clients (e.g., for system-wide announcements or group chats if not handled separately).
-    *   `async def send_to_group(group_id: str, message: str)`: (If group chat is implemented) Sends message to all members of a group.
+- `class ConnectionManager`:
+    - `active_connections: dict[str, WebSocket] = {}`: Maps user_id to WebSocket connection.
+    - `async def connect(user_id: str, websocket: WebSocket)`: Accepts and stores a new connection.
+    - `def disconnect(user_id: str)`: Removes a connection.
+    - `async def send_personal_message(message: str, user_id: str)`
+    - `async def broadcast(message: str)`: Sends a message to all connected clients (e.g., for system-wide announcements or group chats if not handled separately).
+    - `async def send_to_group(group_id: str, message: str)`: (If group chat is implemented) Sends message to all members of a group.
 
 ### 5.4. `messaging/message_router.py`
 
-*   `class MessageRouter`:
-    *   `def __init__(self, connection_manager: ConnectionManager, message_service: MessageService)`
-    *   `async def route_message(sender_id: str, raw_message: dict)`: Parses message type (e.g., one-to-one, group, system), validates, and forwards to `ConnectionManager` or `MessageService`.
+- `class MessageRouter`:
+    - `def __init__(self, connection_manager: ConnectionManager, message_service: MessageService)`
+    - `async def route_message(sender_id: str, raw_message: dict)`: Parses message type (e.g., one-to-one, group, system), validates, and forwards to `ConnectionManager` or `MessageService`.
 
 ### 5.5. `messaging/message_service.py`
 
-*   `class MessageService`:
-    *   `async def store_message(sender_id: str, recipient_id: str, content: str, timestamp: datetime) -> MessageSchema`: Stores a message in the database.
-    *   `async def get_message_history(user_id1: str, user_id2: str, limit: int = 100, offset: int = 0) -> list[MessageSchema]`: Retrieves chat history between two users.
-    *   `async def get_group_message_history(group_id: str, limit: int = 100, offset: int = 0) -> list[MessageSchema]`: Retrieves group message history.
+- `class MessageService`:
+    - `async def store_message(sender_id: str, recipient_id: str, content: str, timestamp: datetime) -> MessageSchema`: Stores a message in the database.
+    - `async def get_message_history(user_id1: str, user_id2: str, limit: int = 100, offset: int = 0) -> list[MessageSchema]`: Retrieves chat history between two users.
+    - `async def get_group_message_history(group_id: str, limit: int = 100, offset: int = 0) -> list[MessageSchema]`: Retrieves group message history.
 
 ## 6. Database Schema (PostgreSQL)
 
-*   **`users` table:**
-    *   `id`: SERIAL PRIMARY KEY
-    *   `username`: VARCHAR(50) UNIQUE NOT NULL
-    *   `email`: VARCHAR(100) UNIQUE NOT NULL
-    *   `hashed_password`: VARCHAR(255) NOT NULL
-    *   `full_name`: VARCHAR(100)
-    *   `created_at`: TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-    *   `last_login_at`: TIMESTAMP WITH TIME ZONE
+- **`users` table:**
 
-*   **`messages` table:**
-    *   `id`: SERIAL PRIMARY KEY
-    *   `sender_id`: INTEGER REFERENCES `users`(`id`) NOT NULL
-    *   `recipient_id`: INTEGER REFERENCES `users`(`id`) NULL (for one-to-one messages)
-    *   `group_id`: INTEGER REFERENCES `groups`(`id`) NULL (for group messages)
-    *   `content`: TEXT NOT NULL
-    *   `sent_at`: TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-    *   `is_read`: BOOLEAN DEFAULT FALSE
+    - `id`: SERIAL PRIMARY KEY
+    - `username`: VARCHAR(50) UNIQUE NOT NULL
+    - `email`: VARCHAR(100) UNIQUE NOT NULL
+    - `hashed_password`: VARCHAR(255) NOT NULL
+    - `full_name`: VARCHAR(100)
+    - `created_at`: TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    - `last_login_at`: TIMESTAMP WITH TIME ZONE
 
-*   **`groups` table:** (For group chat functionality)
-    *   `id`: SERIAL PRIMARY KEY
-    *   `name`: VARCHAR(100) NOT NULL
-    *   `description`: TEXT
-    *   `created_by`: INTEGER REFERENCES `users`(`id`) NOT NULL
-    *   `created_at`: TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+- **`messages` table:**
 
-*   **`group_members` table:** (Many-to-many relationship between users and groups)
-    *   `id`: SERIAL PRIMARY KEY
-    *   `user_id`: INTEGER REFERENCES `users`(`id`) NOT NULL
-    *   `group_id`: INTEGER REFERENCES `groups`(`id`) NOT NULL
-    *   `joined_at`: TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-    *   UNIQUE (`user_id`, `group_id`)
+    - `id`: SERIAL PRIMARY KEY
+    - `sender_id`: INTEGER REFERENCES `users`(`id`) NOT NULL
+    - `recipient_id`: INTEGER REFERENCES `users`(`id`) NULL (for one-to-one messages)
+    - `group_id`: INTEGER REFERENCES `groups`(`id`) NULL (for group messages)
+    - `content`: TEXT NOT NULL
+    - `sent_at`: TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    - `is_read`: BOOLEAN DEFAULT FALSE
 
-*   **Constraints/Indexes:**
-    *   Indexes on `users.username`, `users.email`.
-    *   Indexes on `messages.sender_id`, `messages.recipient_id`, `messages.group_id`, `messages.sent_at`.
-    *   Indexes on `groups.name`.
-    *   Foreign key constraints as defined above.
+- **`groups` table:** (For group chat functionality)
+
+    - `id`: SERIAL PRIMARY KEY
+    - `name`: VARCHAR(100) NOT NULL
+    - `description`: TEXT
+    - `created_by`: INTEGER REFERENCES `users`(`id`) NOT NULL
+    - `created_at`: TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+
+- **`group_members` table:** (Many-to-many relationship between users and groups)
+
+    - `id`: SERIAL PRIMARY KEY
+    - `user_id`: INTEGER REFERENCES `users`(`id`) NOT NULL
+    - `group_id`: INTEGER REFERENCES `groups`(`id`) NOT NULL
+    - `joined_at`: TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    - UNIQUE (`user_id`, `group_id`)
+
+- **Constraints/Indexes:**
+    - Indexes on `users.username`, `users.email`.
+    - Indexes on `messages.sender_id`, `messages.recipient_id`, `messages.group_id`, `messages.sent_at`.
+    - Indexes on `groups.name`.
+    - Foreign key constraints as defined above.
 
 ## 7. Error Handling Strategy
 
-*   **HTTP API Endpoints:**
-    *   Use standard HTTP status codes (e.g., 200 OK, 201 Created, 400 Bad Request, 401 Unauthorized, 403 Forbidden, 404 Not Found, 500 Internal Server Error).
-    *   FastAPI's `HTTPException` will be used for standard error responses.
-    *   Response body for errors: `{"detail": "Error message or description"}`.
-*   **WebSocket Communication:**
-    *   Define a standard message format for errors, e.g., `{"type": "error", "payload": {"code": <error_code>, "message": "<description>"}}`.
-    *   `1xxx` series WebSocket close codes will be used where appropriate.
-    *   Examples of error codes:
-        *   `1001`: Authentication failed
-        *   `1002`: Invalid message format
-        *   `1003`: Target user offline (if not queuing messages)
-        *   `1004`: Rate limit exceeded
-*   **Server-Side Errors:**
-    *   All unexpected errors will be caught at a global level and logged.
-    *   A generic error message will be sent to the client to avoid exposing sensitive details.
+- **HTTP API Endpoints:**
+    - Use standard HTTP status codes (e.g., 200 OK, 201 Created, 400 Bad Request, 401 Unauthorized, 403 Forbidden, 404 Not Found, 500 Internal Server Error).
+    - FastAPI's `HTTPException` will be used for standard error responses.
+    - Response body for errors: `{"detail": "Error message or description"}`.
+- **WebSocket Communication:**
+    - Define a standard message format for errors, e.g., `{"type": "error", "payload": {"code": <error_code>, "message": "<description>"}}`.
+    - `1xxx` series WebSocket close codes will be used where appropriate.
+    - Examples of error codes:
+        - `1001`: Authentication failed
+        - `1002`: Invalid message format
+        - `1003`: Target user offline (if not queuing messages)
+        - `1004`: Rate limit exceeded
+- **Server-Side Errors:**
+    - All unexpected errors will be caught at a global level and logged.
+    - A generic error message will be sent to the client to avoid exposing sensitive details.
 
 ## 8. Logging Strategy
 
-*   **Library:** Standard Python `logging` module, configured by FastAPI/Uvicorn.
-*   **Log Levels:**
-    *   `DEBUG`: Detailed information, typically of interest only when diagnosing problems. (e.g., raw incoming/outgoing messages, connection attempts).
-    *   `INFO`: Confirmation that things are working as expected. (e.g., user login, message sent, server startup).
-    *   `WARNING`: An indication that something unexpected happened, or indicative of some problem in the near future (e.g., 'disk space low'). (e.g., failed login attempt, message delivery retry).
-    *   `ERROR`: Due to a more serious problem, the software has not been able to perform some function. (e.g., database connection failure, unhandled exception in a request).
-    *   `CRITICAL`: A serious error, indicating that the program itself may be unable to continue running.
-*   **Log Format:**
-    *   `%(asctime)s - %(name)s - %(levelname)s - %(module)s.%(funcName)s:%(lineno)d - %(message)s`
-    *   Example: `2023-10-27 10:00:00,000 - uvicorn.access - INFO - main.handle_request:123 - GET /users/me HTTP/1.1 200 OK`
-*   **Log Output:**
-    *   Console (stdout/stderr) during development.
-    *   File-based logging in production (e.g., `/var/log/ccs/ccs.log`) with log rotation.
-*   **Key Information to Log:**
-    *   Application startup and shutdown.
-    *   Incoming requests (HTTP and WebSocket connections) with relevant metadata (IP, user_id if authenticated).
-    *   Authentication successes and failures.
-    *   Message processing details (sender, receiver/group, timestamp) - potentially at DEBUG level for content.
-    *   Database queries (optional, can be verbose, usually enabled at DEBUG level).
-    *   All errors and exceptions with stack traces.
-    *   Presence updates (user connected/disconnected).
+- **Library:** Standard Python `logging` module, configured by FastAPI/Uvicorn.
+- **Log Levels:**
+    - `DEBUG`: Detailed information, typically of interest only when diagnosing problems. (e.g., raw incoming/outgoing messages, connection attempts).
+    - `INFO`: Confirmation that things are working as expected. (e.g., user login, message sent, server startup).
+    - `WARNING`: An indication that something unexpected happened, or indicative of some problem in the near future (e.g., 'disk space low'). (e.g., failed login attempt, message delivery retry).
+    - `ERROR`: Due to a more serious problem, the software has not been able to perform some function. (e.g., database connection failure, unhandled exception in a request).
+    - `CRITICAL`: A serious error, indicating that the program itself may be unable to continue running.
+- **Log Format:**
+    - `%(asctime)s - %(name)s - %(levelname)s - %(module)s.%(funcName)s:%(lineno)d - %(message)s`
+    - Example: `2023-10-27 10:00:00,000 - uvicorn.access - INFO - main.handle_request:123 - GET /users/me HTTP/1.1 200 OK`
+- **Log Output:**
+    - Console (stdout/stderr) during development.
+    - File-based logging in production (e.g., `/var/log/ccs/ccs.log`) with log rotation.
+- **Key Information to Log:**
+    - Application startup and shutdown.
+    - Incoming requests (HTTP and WebSocket connections) with relevant metadata (IP, user_id if authenticated).
+    - Authentication successes and failures.
+    - Message processing details (sender, receiver/group, timestamp) - potentially at DEBUG level for content.
+    - Database queries (optional, can be verbose, usually enabled at DEBUG level).
+    - All errors and exceptions with stack traces.
+    - Presence updates (user connected/disconnected).
 
 ## 9. Security Considerations (Initial Thoughts)
 
-*   **Input Validation:** All incoming data (HTTP request bodies, WebSocket messages) will be strictly validated using Pydantic models.
-*   **Password Hashing:** `passlib` library with a strong hashing algorithm (e.g., bcrypt, Argon2).
-*   **JWT Security:**
-    *   Use HTTPS for all communication.
-    *   Strong, secret key for JWT signing.
-    *   Short-lived access tokens, implement refresh token mechanism if needed.
-*   **WebSocket Security:**
-    *   `wss://` (WebSocket Secure) in production.
-    *   Authenticate WebSocket connections promptly after establishment.
-*   **Rate Limiting:** Consider implementing rate limiting on API endpoints and WebSocket messages to prevent abuse.
-*   **Dependency Management:** Keep dependencies up-to-date to patch known vulnerabilities.
+- **Input Validation:** All incoming data (HTTP request bodies, WebSocket messages) will be strictly validated using Pydantic models.
+- **Password Hashing:** `passlib` library with a strong hashing algorithm (e.g., bcrypt, Argon2).
+- **JWT Security:**
+    - Use HTTPS for all communication.
+    - Strong, secret key for JWT signing.
+    - Short-lived access tokens, implement refresh token mechanism if needed.
+- **WebSocket Security:**
+    - `wss://` (WebSocket Secure) in production.
+    - Authenticate WebSocket connections promptly after establishment.
+- **Rate Limiting:** Consider implementing rate limiting on API endpoints and WebSocket messages to prevent abuse.
+- **Dependency Management:** Keep dependencies up-to-date to patch known vulnerabilities.
 
 ## 10. Scalability Considerations (Initial Thoughts)
 
-*   **Statelessness:** Design services to be as stateless as possible to allow horizontal scaling. User session/connection info might need a shared store (e.g., Redis) if scaling beyond one server instance.
-*   **Asynchronous Operations:** Leverage Python's `asyncio` and FastAPI's async capabilities to handle many concurrent connections efficiently.
-*   **Database Optimization:** Proper indexing, connection pooling. Consider read replicas for the database in the future.
-*   **Load Balancing:** A load balancer will be needed if deploying multiple CCS instances.
-*   **Message Queues (Advanced):** For very high throughput or to decouple services further, a message queue (e.g., RabbitMQ, Kafka) could be introduced between message reception and processing/delivery.
+- **Statelessness:** Design services to be as stateless as possible to allow horizontal scaling. User session/connection info might need a shared store (e.g., Redis) if scaling beyond one server instance.
+- **Asynchronous Operations:** Leverage Python's `asyncio` and FastAPI's async capabilities to handle many concurrent connections efficiently.
+- **Database Optimization:** Proper indexing, connection pooling. Consider read replicas for the database in the future.
+- **Load Balancing:** A load balancer will be needed if deploying multiple CCS instances.
+- **Message Queues (Advanced):** For very high throughput or to decouple services further, a message queue (e.g., RabbitMQ, Kafka) could be introduced between message reception and processing/delivery.
 
 This document provides a foundational design. Further details will be elaborated during the implementation phase of each module.
-
-
-

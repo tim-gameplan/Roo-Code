@@ -28,8 +28,11 @@
 			"@/utils/*": ["src/utils/*"],
 			"@/adapters/*": ["src/adapters/*"],
 			"@/types/*": ["src/types/*"],
-			"@roo/*": ["../webview-ui/src/shared/*"],
-			"@roo-code/types": ["../packages/shared/src/types/*"]
+			"@/lib/*": ["src/lib/*"],
+			"@roo/*": ["../src/shared/*"],
+			"@roo-code/types": ["../packages/types/src/*"],
+			"@webview-ui/*": ["../webview-ui/src/*"],
+			"@src/*": ["../webview-ui/src/*"]
 		}
 	},
 	"include": ["src"],

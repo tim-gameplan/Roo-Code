@@ -1,0 +1,321 @@
+/**
+ * Extension Bridge Service
+ * 
+ * Bridges WebSocket messages from RCCS to Extension IPC for real AI communication
+ * This service enables the Production CCS to communicate with the VSCode extension
+ * for actual AI task processing.
+ */
+
+import { EventEmitter } from 'events';
+import { IpcClient } from '@roo-code/ipc';
+import { TaskCommandName, IpcMessageType } from '@roo-code/types';
+import { logger } from '../utils/logger';
+import { RCCSWebSocketServer } from './rccs-websocket-server';
+import { CloudMessage, CloudMessageType, MessagePriority } from '../types/rccs';
+
+export interface ExtensionBridgeConfig {
+  socketPath: string;
+  timeout: number;
+  retryAttempts: number;
+  retryDelay: number;
+}
+
+export class ExtensionBridgeService extends EventEmitter {
+  private ipcClient?: IpcClient;
+  private wsServer: RCCSWebSocketServer;
+  private config: ExtensionBridgeConfig;
+  private isConnected = false;
+
+  constructor(wsServer: RCCSWebSocketServer, config: ExtensionBridgeConfig) {
+    super();
+    this.wsServer = wsServer;
+    this.config = config;
+    this.setupWebSocketHandlers();
+  }
+
+  /**
+   * Start the bridge service and connect to extension IPC
+   */
+  async start(): Promise<void> {
+    try {
+      logger.info('Starting Extension Bridge Service', {
+        socketPath: this.config.socketPath,
+      });
+
+      // Create IPC client connection to extension
+      this.ipcClient = new IpcClient(
+        this.config.socketPath,
+        (...args: unknown[]) => logger.debug('[ExtensionBridge]', ...args)
+      );
+
+      // Setup IPC event handlers
+      this.setupIpcHandlers();
+
+      // Wait for connection
+      await this.waitForConnection();
+
+      logger.info('Extension Bridge Service started successfully');
+    } catch (error) {
+      logger.error('Failed to start Extension Bridge Service', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * Stop the bridge service
+   */
+  async stop(): Promise<void> {
+    if (this.ipcClient) {
+      this.ipcClient.destroy();
+      this.ipcClient = undefined;
+    }
+    this.isConnected = false;
+    logger.info('Extension Bridge Service stopped');
+  }
+
+  /**
+   * Setup WebSocket server handlers to receive messages from clients
+   */
+  private setupWebSocketHandlers(): void {
+    this.wsServer.on('message:received', async (message: CloudMessage, connectionInfo) => {
+      try {
+        await this.handleWebSocketMessage(message, connectionInfo);
+      } catch (error) {
+        logger.error('Error handling WebSocket message in bridge', {
+          messageId: message.id,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+    });
+  }
+
+  /**
+   * Setup IPC client handlers to receive responses from extension
+   */
+  private setupIpcHandlers(): void {
+    if (!this.ipcClient) return;
+
+    this.ipcClient.on(IpcMessageType.Connect, () => {
+      this.isConnected = true;
+      logger.info('Connected to extension IPC');
+    });
+
+    this.ipcClient.on(IpcMessageType.Disconnect, () => {
+      this.isConnected = false;
+      logger.warn('Disconnected from extension IPC');
+    });
+
+    this.ipcClient.on(IpcMessageType.TaskEvent, async (data: any) => {
+      try {
+        await this.handleExtensionEvent(data);
+      } catch (error) {
+        logger.error('Error handling extension event', {
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+    });
+  }
+
+  /**
+   * Handle incoming WebSocket messages and convert to extension tasks
+   */
+  private async handleWebSocketMessage(message: CloudMessage, connectionInfo: any): Promise<void> {
+    // Only handle user messages that should start AI tasks
+    if (message.type !== CloudMessageType.USER_MESSAGE) {
+      return;
+    }
+
+    const messageContent = message.payload;
+    if (!messageContent || typeof messageContent !== 'object') {
+      logger.warn('Invalid message content received', { messageId: message.id });
+      return;
+    }
+
+    // Check if this is a newTask message from web UI
+    if (messageContent.type === 'newTask' && messageContent.text) {
+      logger.info('Starting new AI task from WebSocket', {
+        messageId: message.id,
+        taskText: messageContent.text.substring(0, 100) + '...',
+        deviceId: message.fromDeviceId,
+      });
+
+      // Send task command to extension
+      if (this.ipcClient && this.isConnected) {
+        this.ipcClient.sendCommand({
+          commandName: TaskCommandName.StartNewTask,
+          data: {
+            text: messageContent.text,
+            images: messageContent.images || [],
+            configuration: {
+              // Use default configuration for now
+              // TODO: Allow configuration from WebSocket message
+            },
+          },
+        });
+      } else {
+        logger.error('Cannot start task: not connected to extension IPC');
+        
+        // Send error response back to WebSocket client
+        const errorResponse: CloudMessage = {
+          id: this.generateMessageId(),
+          type: CloudMessageType.ERROR,
+          fromDeviceId: 'server',
+          toDeviceId: message.fromDeviceId,
+          userId: message.userId,
+          payload: {
+            error: 'Extension not connected',
+            message: 'Cannot process AI tasks: extension IPC not available',
+          },
+          timestamp: new Date(),
+          priority: MessagePriority.HIGH,
+          requiresAck: false,
+        };
+
+        await this.wsServer.sendMessageToDevice(message.fromDeviceId, errorResponse);
+      }
+    }
+  }
+
+  /**
+   * Handle events from extension (AI responses, streaming updates, etc.)
+   */
+  private async handleExtensionEvent(eventData: any): Promise<void> {
+    logger.debug('Received extension event', { eventName: eventData.eventName });
+
+    // Handle different types of extension events
+    switch (eventData.eventName) {
+      case 'Message':
+        await this.handleExtensionMessage(eventData.payload);
+        break;
+      case 'TaskStarted':
+        await this.handleTaskStarted(eventData.payload);
+        break;
+      case 'TaskFinished':
+        await this.handleTaskFinished(eventData.payload);
+        break;
+      default:
+        logger.debug('Unhandled extension event', { eventName: eventData.eventName });
+    }
+  }
+
+  /**
+   * Handle AI message updates from extension (including streaming)
+   */
+  private async handleExtensionMessage(messageData: any): Promise<void> {
+    const { taskId, action, message } = messageData;
+
+    // Convert extension message to WebSocket format
+    const wsMessage: CloudMessage = {
+      id: this.generateMessageId(),
+      type: CloudMessageType.USER_RESPONSE,
+      fromDeviceId: 'extension',
+      toDeviceId: 'all', // Broadcast to all connected devices for now
+      userId: 'system',
+      payload: {
+        type: 'messageUpdated',
+        clineMessage: message,
+        action,
+        taskId,
+      },
+      timestamp: new Date(),
+      priority: MessagePriority.NORMAL,
+      requiresAck: false,
+    };
+
+    // Broadcast to all connected devices
+    // TODO: Implement proper device targeting based on task ownership
+    await this.wsServer.broadcastMessage(wsMessage);
+  }
+
+  /**
+   * Handle task started event
+   */
+  private async handleTaskStarted(taskId: string): Promise<void> {
+    logger.info('AI task started', { taskId });
+    
+    const wsMessage: CloudMessage = {
+      id: this.generateMessageId(),
+      type: CloudMessageType.NOTIFICATION,
+      fromDeviceId: 'extension',
+      toDeviceId: 'all',
+      userId: 'system',
+      payload: {
+        type: 'taskStarted',
+        taskId,
+      },
+      timestamp: new Date(),
+      priority: MessagePriority.HIGH,
+      requiresAck: false,
+    };
+
+    await this.wsServer.broadcastMessage(wsMessage);
+  }
+
+  /**
+   * Handle task finished event
+   */
+  private async handleTaskFinished(taskId: string): Promise<void> {
+    logger.info('AI task finished', { taskId });
+    
+    const wsMessage: CloudMessage = {
+      id: this.generateMessageId(),
+      type: CloudMessageType.NOTIFICATION,
+      fromDeviceId: 'extension',
+      toDeviceId: 'all',
+      userId: 'system',
+      payload: {
+        type: 'taskFinished',
+        taskId,
+      },
+      timestamp: new Date(),
+      priority: MessagePriority.HIGH,
+      requiresAck: false,
+    };
+
+    await this.wsServer.broadcastMessage(wsMessage);
+  }
+
+  /**
+   * Wait for IPC connection to be established
+   */
+  private async waitForConnection(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        reject(new Error('Timeout waiting for extension IPC connection'));
+      }, this.config.timeout);
+
+      const checkConnection = () => {
+        if (this.isConnected) {
+          clearTimeout(timeout);
+          resolve();
+        } else {
+          setTimeout(checkConnection, 100);
+        }
+      };
+
+      checkConnection();
+    });
+  }
+
+  /**
+   * Generate unique message ID
+   */
+  private generateMessageId(): string {
+    return `bridge_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  }
+
+  /**
+   * Get bridge status
+   */
+  public getStatus(): {
+    isConnected: boolean;
+    socketPath: string;
+  } {
+    return {
+      isConnected: this.isConnected,
+      socketPath: this.config.socketPath,
+    };
+  }
+}

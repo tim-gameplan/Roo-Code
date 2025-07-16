@@ -110,12 +110,8 @@ export async function activate(context: vscode.ExtensionContext) {
 	const provider = new ClineProvider(context, outputChannel, "sidebar", contextProxy, codeIndexManager, mdmService)
 	TelemetryService.instance.setProvider(provider)
 
-	// TASK-002: Setup Remote UI IPC listener
-	console.log("🔧 [DEBUG] Extension activating with IPC support")
+	// Setup Remote UI IPC listener
 	provider.setupRemoteUIListener()
-	console.log("🔧 [DEBUG] setupRemoteUIListener() called from activation")
-
-	console.log("🔧 [DEBUG] Setting up subscriptions...")
 	if (codeIndexManager) {
 		context.subscriptions.push(codeIndexManager)
 	}
@@ -126,9 +122,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		}),
 	)
 
-	console.log("🔧 [DEBUG] Webview provider registered, registering commands...")
 	registerCommands({ context, outputChannel, provider })
-	console.log("🔧 [DEBUG] Commands registered...")
 
 	/**
 	 * We use the text document content provider API to show the left side for diff
@@ -171,21 +165,10 @@ export async function activate(context: vscode.ExtensionContext) {
 	// Allows other extensions to activate once Roo is ready.
 	vscode.commands.executeCommand(`${Package.name}.activationCompleted`)
 
-	console.log("🔧 [DEBUG] About to handle IPC setup...")
-
-	// // Implements the `RooCodeAPI` interface.
-	// const socketPath = process.env.ROO_CODE_IPC_SOCKET_PATH
-	// const enableLogging = typeof socketPath === "string"
-
-	// Implements the `RooCodeAPI` interface.
+	// Implements the `RooCodeAPI` interface with IPC support for mobile remote access
 	const socketPath = process.env.ROO_CODE_IPC_SOCKET_PATH || "/tmp/app.roo-extension"
-	console.log(`🔧 [DEBUG] socketPath: ${socketPath}`)
-	console.log("🔧 [DEBUG] socketPath:", socketPath, "enableLogging:", typeof socketPath === "string")
 	const enableLogging = typeof socketPath === "string"
-
-	console.log("🔧 [DEBUG] About to create API with IPC...")
 	const api = new API(outputChannel, provider, socketPath, enableLogging)
-	console.log("🔧 [DEBUG] API created, IPC should be started")
 
 	// Watch the core files and automatically reload the extension host.
 	if (process.env.NODE_ENV === "development") {

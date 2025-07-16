@@ -17,7 +17,7 @@ export class WebSocketClient {
 					this.ws.close()
 				}
 
-				this.ws = new WebSocket(`ws://localhost:3001/ws`)
+				this.ws = new WebSocket(`ws://localhost:3001`)
 
 				this.ws.onopen = () => {
 					console.log("WebSocket connected to CCS server")
