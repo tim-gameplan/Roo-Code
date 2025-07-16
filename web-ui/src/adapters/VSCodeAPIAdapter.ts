@@ -18,6 +18,43 @@ export class VSCodeAPIAdapter {
 		this.wsClient.onMessage((data) => {
 			this.handleIncomingMessage(data)
 		})
+
+		// Register device with CCS after connection
+		await this.registerDevice()
+	}
+
+	// Register this web client as a device with the CCS
+	private async registerDevice(): Promise<void> {
+		const deviceRegistration = {
+			id: this.generateMessageId(),
+			type: "DEVICE_REGISTER",
+			fromDeviceId: this.getDeviceId(),
+			toDeviceId: "server",
+			userId: this.getUserId(),
+			payload: {
+				id: this.getDeviceId(),
+				userId: this.getUserId(),
+				type: "desktop", // Web client acts as desktop device
+				platform: navigator.platform || "web",
+				version: "1.0.0",
+				capabilities: {
+					supportsFileSync: true,
+					supportsVoiceCommands: false,
+					supportsVideoStreaming: false,
+					supportsNotifications: true,
+					maxFileSize: 10 * 1024 * 1024, // 10MB
+					supportedFormats: ["json", "text"],
+				},
+				lastSeen: new Date(),
+				status: "online",
+			},
+			timestamp: new Date(),
+			priority: 1, // HIGH priority
+			requiresAck: true,
+		}
+
+		this.wsClient.send(deviceRegistration)
+		console.log("Device registration sent to CCS:", deviceRegistration)
 	}
 
 	// Mock VSCode postMessage API
@@ -60,15 +97,16 @@ export class VSCodeAPIAdapter {
 		if (message.action === "sendMessage" && message.content) {
 			console.log("Processing chat message:", message.content)
 
-			// Map ChatView message to RCCS CloudMessage protocol
-			const cloudMessage = {
+			// Map ChatView message to Extension API call via CCS
+			const extensionMessage = {
 				id: this.generateMessageId(),
-				type: "MESSAGE",
+				type: "EXTENSION_MESSAGE",
 				fromDeviceId: this.getDeviceId(),
 				toDeviceId: "extension",
 				userId: this.getUserId(),
 				payload: {
-					type: "newTask",
+					// Map to WebviewMessage format that Extension expects
+					type: "askResponse",
 					text: message.content,
 					images: message.images || [],
 				},
@@ -77,10 +115,20 @@ export class VSCodeAPIAdapter {
 				requiresAck: false,
 			}
 
-			// Send mapped message via WebSocket
+			// Send mapped message via WebSocket to CCS
 			if (this.wsClient?.isConnected()) {
-				this.wsClient.send(cloudMessage)
-				console.log("Sent chat message to extension via WebSocket:", cloudMessage)
+				this.wsClient.send(extensionMessage)
+				console.log("Sent chat message to extension via CCS:", extensionMessage)
+
+				// Update UI to show message as sent
+				this.dispatchToUI({
+					type: "messageUpdated",
+					payload: {
+						messageId: this.generateMessageId(),
+						status: "sent",
+						content: message.content,
+					},
+				})
 			} else {
 				console.warn("WebSocket not connected, cannot send message")
 				// Show error to user
@@ -119,23 +167,42 @@ export class VSCodeAPIAdapter {
 	}
 
 	private handleIncomingMessage(data: any): void {
-		// Map WebSocket messages from extension to ChatView format
-		if (data.type) {
-			console.log("Received message from WebSocket:", data)
+		console.log("Received message from CCS:", data)
 
-			// Handle specific message types from extension
+		// Handle CCS protocol messages
+		if (data.type) {
 			switch (data.type) {
-				case "messageUpdated":
-				case "state":
-					// Extension state/message updates - pass through to ChatView
-					this.dispatchToUI(data)
+				case "ACK":
+					// Registration or message acknowledgment
+					if (data.payload?.status === "success") {
+						console.log("Device registration successful:", data.payload)
+						this.dispatchToUI({
+							type: "connectionStatus",
+							payload: { connected: true, authenticated: true },
+						})
+					}
 					break
-				case "action":
-					// Extension action messages (AI responses, tool usage, etc.)
-					this.dispatchToUI(data)
+
+				case "EXTENSION_RESPONSE":
+					// Response from extension via CCS
+					if (data.payload) {
+						// Map extension message format to ChatView format
+						const extensionMessage = data.payload
+						this.handleExtensionMessage(extensionMessage)
+					}
 					break
+
+				case "ERROR":
+					// Error from CCS
+					console.error("CCS Error:", data.payload)
+					this.dispatchToUI({
+						type: "error",
+						payload: { message: data.payload?.message || "Unknown error" },
+					})
+					break
+
 				default:
-					// Generic message handling
+					// Forward other messages to UI
 					this.dispatchToUI(data)
 					break
 			}
@@ -147,6 +214,42 @@ export class VSCodeAPIAdapter {
 			if (handler) {
 				handler(data.payload || data)
 			}
+		}
+	}
+
+	// Handle messages from extension (received via CCS)
+	private handleExtensionMessage(extensionMessage: any): void {
+		console.log("Processing extension message:", extensionMessage)
+
+		switch (extensionMessage.type) {
+			case "action":
+				// AI responses, tool usage, etc.
+				this.dispatchToUI({
+					type: "action",
+					payload: extensionMessage,
+				})
+				break
+
+			case "state":
+				// Extension state updates
+				this.dispatchToUI({
+					type: "state",
+					payload: extensionMessage,
+				})
+				break
+
+			case "messageUpdated":
+				// Chat message updates (streaming responses)
+				this.dispatchToUI({
+					type: "messageUpdated",
+					payload: extensionMessage,
+				})
+				break
+
+			default:
+				// Generic message forwarding
+				this.dispatchToUI(extensionMessage)
+				break
 		}
 	}
 

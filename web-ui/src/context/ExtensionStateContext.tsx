@@ -313,30 +313,30 @@ export function ExtensionStateProvider({ children }: ExtensionStateProviderProps
 			dispatch({ type: "SET_LOADING", payload: true })
 
 			try {
-				// Use VSCode API adapter to send message
+				// Use VSCode API adapter to send message to Production CCS
 				const vscode = (window as any).vscode
-				if (vscode) {
+				if (vscode && vscode.isConnected()) {
 					vscode.postMessage({
 						type: "chat",
 						action: "sendMessage",
 						content: content.trim(),
 					})
+
+					// Update user message status
+					updateMessage(userMessageId, { status: "sent" })
+
+					console.log("✅ Message sent to Production CCS:", content.trim())
+				} else {
+					throw new Error("Not connected to Production CCS")
 				}
-
-				// Update user message status
-				updateMessage(userMessageId, { status: "sent" })
-
-				// For now, simulate an AI response
-				setTimeout(() => {
-					addMessage({
-						type: "assistant",
-						content: `I received your message: "${content.trim()}". Full AI integration is coming soon!`,
-					})
-					dispatch({ type: "SET_LOADING", payload: false })
-				}, 1000)
 			} catch (error) {
-				console.error("Failed to send message:", error)
+				console.error("❌ Failed to send message:", error)
 				updateMessage(userMessageId, { status: "error" })
+				addMessage({
+					type: "system",
+					content: `Error: ${error instanceof Error ? error.message : "Failed to send message"}`,
+					isError: true,
+				})
 				dispatch({ type: "SET_LOADING", payload: false })
 			}
 		},
@@ -360,6 +360,64 @@ export function ExtensionStateProvider({ children }: ExtensionStateProviderProps
 			createNewTask("Welcome Chat")
 		}
 	}, [state.currentTask, state.taskHistory.length, createNewTask])
+
+	// Listen for messages from VSCode API adapter (responses from extension via CCS)
+	useEffect(() => {
+		const handleVSCodeMessage = (event: CustomEvent) => {
+			const { type, payload } = event.detail
+			console.log("📨 Received message from CCS:", type, payload)
+
+			switch (type) {
+				case "action":
+					// AI responses, tool usage, etc.
+					if (payload?.text) {
+						addMessage({
+							type: "assistant",
+							content: payload.text,
+						})
+						dispatch({ type: "SET_LOADING", payload: false })
+					}
+					break
+
+				case "messageUpdated":
+					// Streaming response updates
+					if (payload?.content) {
+						addMessage({
+							type: "assistant",
+							content: payload.content,
+						})
+						dispatch({ type: "SET_LOADING", payload: false })
+					}
+					break
+
+				case "connectionStatus":
+					// Connection status updates
+					setConnectionStatus(payload?.connected || false, payload?.error)
+					break
+
+				case "error":
+					// Error messages
+					addMessage({
+						type: "system",
+						content: payload?.message || "An error occurred",
+						isError: true,
+					})
+					dispatch({ type: "SET_LOADING", payload: false })
+					break
+
+				default:
+					console.log("Unhandled message type:", type, payload)
+					break
+			}
+		}
+
+		// Listen for custom vscode-message events
+		window.addEventListener("vscode-message", handleVSCodeMessage as EventListener)
+
+		return () => {
+			window.removeEventListener("vscode-message", handleVSCodeMessage as EventListener)
+		}
+	}, [addMessage, setConnectionStatus])
 
 	const contextValue = {
 		state,
